@@ -11,7 +11,6 @@ all: $(ALL)
 
 clean:
 	rm -f $(ALL) $(BINARIES)
-	rm -f phonebook.o
 
 phonebook: phonebook.o $(BINARIES)
 	$(CC) $(CCOPTS) $^ -o $@
