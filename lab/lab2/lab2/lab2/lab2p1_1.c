@@ -42,7 +42,7 @@ void startServer(uint16_t portNum);
 void formHTTPResponse(char *buffer, uint16_t maxBufferLen, uint16_t returnCode, 
 	char *returnMessage, char *body, uint16_t bodyLength);
 void deliverHTTP(int connfd);
-char *getCurrentTime();
+char *getCurrentTime(void);
 void writeLog(const char *format, ...);
 void parseHTTP(const char *buffer, int *method, char *filename);
 
@@ -221,6 +221,7 @@ void startServer(uint16_t portNum)
 
 	while(1)
 	{
+        fork();
 		connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
 		writeLog("Connection received.");
 
