@@ -43,16 +43,25 @@ void formHTTPResponse(char *buffer, uint16_t maxBufferLen, uint16_t returnCode,
 	char *returnMessage, char *body, uint16_t bodyLength);
 void deliverHTTP(int connfd);
 char *getCurrentTime(void);
+void startPipe(void);
 void writeLog(const char *format, ...);
 void parseHTTP(const char *buffer, int *method, char *filename);
 
 int fd[2]; //declare a pipe file as global variable
-int childFlag; //flag for declaring child logging process
 
 int main(int ac, char **av)
 {
-    childFlag = fork();  //fork a child process and store the value inside childFlag
-	startServer(PORTNUM);
+    // create the pipe
+    if (pipe(fd) < 0) {
+        perror("fail to create the pipe!");
+        exit(-1);
+    }
+
+    // fork the child for logging
+    if (fork() == 0)
+        startPipe();
+    else
+        startServer(PORTNUM);
 }
 
 char *getCurrentTime()
@@ -176,6 +185,40 @@ void deliverHTTP(int connfd)
 	close(connfd);
 }
 
+void startPipe()
+{
+    char logBuffer[LOG_BUFFER_LEN];  //our buffer
+    int n;  //# of characeters written/read, for debug purpose
+
+    //child should close the output side of the pipe
+    printf("listening the pipe to write to file----\n");
+
+    while (1) {
+        //close(fd[1]);
+
+        //read from the pipe
+        if ((n = read(fd[0], logBuffer, MAX_BUFFER_LEN)) < 0) {
+            continue;
+        }
+
+        printf("Child read %d bytes from parent: %s\n", n, logBuffer); //logging here
+
+        //starting saving to the file
+        FILE *file = fopen("log.txt", "a");
+
+        int results = fputs(logBuffer, file);
+        if (results == EOF) {
+            // Failed to write to file, log error here
+            printf("Error saving to file!");
+        }
+        fclose(file); //close file stream
+
+        //close(fd[0]);
+        //pause();
+    }
+
+}
+
 void writeLog(const char *format, ...)
 {
 	char logBuffer[LOG_BUFFER_LEN];  //our buffer
@@ -186,50 +229,21 @@ void writeLog(const char *format, ...)
 	vsprintf(logBuffer, format, args);
 	va_end(args);
 
-    pipe(fd);  //create a pipe using fd
+    // parent or other child processes running as server
+    //close(fd[0]);
 
-    if (childFlag == 0) {
-        //child should close the output side of the pipe
-        close(fd[1]);
+    sprintf(logBuffer, "%s: %s\n", getCurrentTime(), logBuffer);
+    n = write(fd[1], logBuffer, strlen(logBuffer)+1);
+    printf("Parent wrote %d bytes to the child: %s \n", n, logBuffer); //logging here
+    //close(fd[1]);
 
-        //read from the pipe
-        n = read(fd[0], logBuffer, MAX_BUFFER_LEN);
-        printf("Child read %d bytes from parent: %s\n", n, logBuffer); //logging here
-
-        //starting saving to the file
-        FILE *file = fopen("log.txt", "w");
-
-        int results = fputs(logBuffer, file);
-        if (results == EOF) {
-            // Failed to write to file, log error here
-            printf("Error saving to file!");
-        }
-        fclose(file); //close file stream
-
-        close(fd[0]);
-    } else {
-        int status;
-        //parent should close input side of the pipe
-        close(fd[0]);
-
-        //write to the pipe
-        sprintf(logBuffer, "%s: %s\n", getCurrentTime(), logBuffer);
-        n = write(fd[1], logBuffer, strlen(logBuffer)+1);
-        printf("Parent wrote %d bytes to the child: %s \n", n, logBuffer); //log here
-        close(fd[1]);
-        wait(&status);
-    }
 }
 
 void startServer(uint16_t portNum)
 {
-    if (childFlag == 0) {
-        return; //child process should have no server
-    }
 
 	static int listenfd, connfd;
 	static struct sockaddr_in serv_addr;
-
 
 	listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
