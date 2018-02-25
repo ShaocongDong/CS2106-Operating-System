@@ -123,7 +123,7 @@ void parseHTTP(const char *buffer, int *method, char *filename)
 	mtd=strtok(tmpBuffer, " ");
 	fname=strtok(NULL, " ");
 
-	printf("PARSING METHOD\n");
+	//printf("PARSING METHOD\n");
 	if(strcmp(mtd, "HEAD") == 0)
 		*method= GET;
 	else
@@ -135,9 +135,9 @@ void parseHTTP(const char *buffer, int *method, char *filename)
 			else
 				*method = GET;
 	
-	printf("Copying filename\n");
+	//printf("Copying filename\n");
 	strncpy(filename, fname, MAX_FILENAME_LEN);
-	printf("Done. Filename is %s\n", filename);
+	//printf("Done. Filename is %s\n", filename);
 }
 
 void deliverHTTP(int connfd)
@@ -153,8 +153,8 @@ void deliverHTTP(int connfd)
 	char fetchName[MAX_FILENAME_LEN];
 
 	parseHTTP(HTTPBuffer, &method, filename);
-	printf("Method = %d filename = %s\n", method,filename);
-
+	//printf("Method = %d filename = %s\n", method,filename);
+    int servingFlag = 0;
 	if(method == HEAD)
 		formHTTPResponse(HTTPBuffer, MAX_BUFFER_LEN, 200, "OK", NULL, 0);
 	else
@@ -177,51 +177,52 @@ void deliverHTTP(int connfd)
 			readHTML(fptr, fileBuffer, MAX_FILE_SIZE);
 			fclose(fptr);
 			formHTTPResponse(HTTPBuffer, MAX_BUFFER_LEN, 200, "OK", fileBuffer, strlen(fileBuffer));
-			writeLog("Serving %s", HTTPBuffer);
+            servingFlag = 1;
 		}
 	}
-
 	write(connfd, HTTPBuffer, strlen(HTTPBuffer));
 	close(connfd);
+    if (servingFlag == 1) {
+        sleep(1);
+        writeLog("Serving %s", HTTPBuffer);
+    }
 }
 
 void startPipe()
 {
-    char logBuffer[LOG_BUFFER_LEN];  //our buffer
+    char logBuffer[MAX_BUFFER_LEN];  //our buffer for listening from the pipe
     int n;  //# of characeters written/read, for debug purpose
-
-    //child should close the output side of the pipe
-    printf("listening the pipe to write to file----\n");
 
     while (1) {
         //close(fd[1]);
-
         //read from the pipe
         if ((n = read(fd[0], logBuffer, MAX_BUFFER_LEN)) < 0) {
             continue;
         }
 
-        printf("Child read %d bytes from parent: %s\n", n, logBuffer); //logging here
+        //printf("Child read %d bytes from parent: %s\n", n, logBuffer); //logging here
 
         //starting saving to the file
-        FILE *file = fopen("log.txt", "a");
+        FILE *file = fopen("log.txt", "a+");
 
-        int results = fputs(logBuffer, file);
+        int results = fprintf(file, "%s", logBuffer);
+        //printf("%s\n%s", "WHAT DOES CHILD GET FROM PIPE:---------", logBuffer);
+        //int results = fputs(logBuffer, file);
         if (results == EOF) {
             // Failed to write to file, log error here
             printf("Error saving to file!");
         }
-        fclose(file); //close file stream
-
         //close(fd[0]);
-        //pause();
+        fclose(file); //close file stream
     }
+
 
 }
 
 void writeLog(const char *format, ...)
 {
-	char logBuffer[LOG_BUFFER_LEN];  //our buffer
+	char logBuffer[MAX_BUFFER_LEN];  //our buffer for message
+    char pipeBuffer[MAX_BUFFER_LEN]; //our buffer for pipe and logging
     int n;  //# of characeters written/read, for debug purpose
 	va_list args;
 	
@@ -229,13 +230,10 @@ void writeLog(const char *format, ...)
 	vsprintf(logBuffer, format, args);
 	va_end(args);
 
-    // parent or other child processes running as server
-    //close(fd[0]);
-
-    sprintf(logBuffer, "%s: %s\n", getCurrentTime(), logBuffer);
-    n = write(fd[1], logBuffer, strlen(logBuffer)+1);
-    printf("Parent wrote %d bytes to the child: %s \n", n, logBuffer); //logging here
-    //close(fd[1]);
+    sprintf(pipeBuffer, "%s: %s\n", getCurrentTime(), logBuffer);
+    //printf("%s\n%s", "WHAT DOES PARENT WRITE TO PIPE:---------", pipeBuffer);
+    n = write(fd[1], pipeBuffer, strlen(pipeBuffer)+1);
+    //printf("Parent wrote %d bytes to the child: %s \n", n, pipeBuffer); //logging here
 
 }
 
