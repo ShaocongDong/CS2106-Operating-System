@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 // Port Number
 #define PORTNUM			80
@@ -45,6 +46,8 @@ void deliverHTTP(int connfd);
 char *getCurrentTime();
 void writeLog(const char *format, ...);
 void parseHTTP(const char *buffer, int *method, char *filename);
+void *threadWork (void * listenfd);
+void *loggerThread (void * parameter);
 
 // File pointer for the log. Your logging code should write to this
 FILE *logfptr;
@@ -64,6 +67,11 @@ int main(int ac, char **av)
 		fprintf(stderr, "Cannot open log file\n");
 		exit(-1);
 	}
+    // create logger thread
+    pthread_t thread;
+    pthread_create(&thread, NULL, loggerThread, NULL);
+    pthread_detach(thread);
+
 	startServer(PORTNUM);
 }
 
@@ -204,7 +212,9 @@ void writeLog(const char *format, ...)
 	vsprintf(myBuffer, format, args);
 	va_end(args);
 
-	sprintf(logBuffer, "%s: %s", getCurrentTime(), myBuffer);
+    printf("%s", myBuffer); //debug
+
+    sprintf(logBuffer, "%s: %s", getCurrentTime(), myBuffer);
 	logReady=1;
 }
 
@@ -212,7 +222,7 @@ void startServer(uint16_t portNum)
 {
 	static int listenfd, connfd;
 	static struct sockaddr_in serv_addr;
-
+    pthread_t thread[10];
 
 	listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -241,12 +251,33 @@ void startServer(uint16_t portNum)
 	}
 
 	writeLog("Web server started at port number %d", portNum);
-
-	while(1)
+	while (connfd = accept(listenfd, (struct sockaddr *) NULL, NULL))
 	{
-		connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
-		writeLog("Connection received.");
-
-		deliverHTTP(connfd);
+        writeLog("Connection received.");
+        //multi-threading to deliver HTTP
+        pthread_t thread;
+        pthread_create(&thread, NULL, threadWork, (void *) connfd);
+        pthread_detach(thread);
 	}
+}
+
+void * threadWork (void * connfd) {
+    deliverHTTP(connfd);
+    pthread_exit(NULL);
+}
+
+void * loggerThread (void * parameter) {
+    while (1) {
+        if (logReady) {
+            int results = fprintf(logfptr, "%s", logBuffer);
+
+            if (results == EOF) {
+                printf("Error saving to file!");
+            }
+
+            fflush(logfptr);
+
+            logReady = 0;
+        }
+    }
 }
