@@ -251,8 +251,9 @@ void startServer(uint16_t portNum)
 	}
 
 	writeLog("Web server started at port number %d", portNum);
-	while (connfd = accept(listenfd, (struct sockaddr *) NULL, NULL))
-	{
+	while (1)
+    {
+        connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
         writeLog("Connection received.");
         //multi-threading to deliver HTTP
         pthread_t thread;
