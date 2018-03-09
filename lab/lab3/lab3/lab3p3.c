@@ -43,7 +43,7 @@ void startServer(uint16_t portNum);
 void formHTTPResponse(char *buffer, uint16_t maxBufferLen, uint16_t returnCode, 
 	char *returnMessage, char *body, uint16_t bodyLength);
 void deliverHTTP(int connfd);
-char *getCurrentTime();
+char *getCurrentTime(void);
 void writeLog(const char *format, ...);
 void parseHTTP(const char *buffer, int *method, char *filename);
 void *threadWork (void * listenfd);
@@ -73,7 +73,7 @@ int main(int ac, char **av)
     pthread_create(&thread, NULL, loggerThread, NULL);
     pthread_detach(thread);
 
-	startServer(PORTNUM);
+    startServer(PORTNUM);
 }
 
 char *getCurrentTime()
@@ -252,6 +252,7 @@ void startServer(uint16_t portNum)
 	}
 
 	writeLog("Web server started at port number %d", portNum);
+
 	while (1)
     {
         //multi-threading to deliver HTTP
@@ -266,9 +267,9 @@ void startServer(uint16_t portNum)
 
 void * threadWork (void * listenfd) {
     int connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
+    freeThread = 0; //set back the freeThread to 0 as there are no free threads left
     writeLog("Connection received.");
     deliverHTTP(connfd);
-    freeThread = 0; //set back the freeThread to 0 as there are no free threads left
     pthread_exit(NULL);
 }
 
