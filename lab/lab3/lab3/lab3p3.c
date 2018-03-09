@@ -57,7 +57,8 @@ FILE *logfptr;
 char logBuffer[LOG_BUFFER_LEN];
 
 // You can use this flag to tell the logger thread that the buffer contains valid data
-volatile int logReady=0;
+volatile int logReady = 0;
+volatile int freeThread = 0;
 
 int main(int ac, char **av)
 {
@@ -253,17 +254,21 @@ void startServer(uint16_t portNum)
 	writeLog("Web server started at port number %d", portNum);
 	while (1)
     {
-        connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
-        writeLog("Connection received.");
         //multi-threading to deliver HTTP
-        pthread_t thread;
-        pthread_create(&thread, NULL, threadWork, (void *) connfd);
-        pthread_detach(thread);
+        if (freeThread == 0) { //create a new thread if no free threads available at the moment
+            freeThread = 1; //prevent too many threads to be produced
+            pthread_t thread;
+            pthread_create(&thread, NULL, threadWork, (void *) listenfd);
+            pthread_detach(thread);
+        }
 	}
 }
 
-void * threadWork (void * connfd) {
+void * threadWork (void * listenfd) {
+    int connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
+    writeLog("Connection received.");
     deliverHTTP(connfd);
+    freeThread = 0; //set back the freeThread to 0 as there are no free threads left
     pthread_exit(NULL);
 }
 
