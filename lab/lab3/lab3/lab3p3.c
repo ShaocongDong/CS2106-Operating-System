@@ -42,7 +42,7 @@ enum
 void startServer(uint16_t portNum);
 void formHTTPResponse(char *buffer, uint16_t maxBufferLen, uint16_t returnCode, 
 	char *returnMessage, char *body, uint16_t bodyLength);
-void deliverHTTP(int connfd);
+void *deliverHTTP(int connfd);
 char *getCurrentTime(void);
 void writeLog(const char *format, ...);
 void parseHTTP(const char *buffer, int *method, char *filename);
@@ -159,7 +159,7 @@ void parseHTTP(const char *buffer, int *method, char *filename)
 	}
 }
 
-void deliverHTTP(int connfd)
+void *deliverHTTP(int connfd)
 {
 	FILE *fptr;
 	char HTTPBuffer[MAX_BUFFER_LEN];
@@ -202,6 +202,7 @@ void deliverHTTP(int connfd)
 
 	write(connfd, HTTPBuffer, strlen(HTTPBuffer));
 	close(connfd);
+    pthread_exit(NULL);
 }
 
 void writeLog(const char *format, ...)
@@ -223,9 +224,11 @@ void startServer(uint16_t portNum)
 {
 	static int listenfd, connfd;
 	static struct sockaddr_in serv_addr;
-    pthread_t thread[10];
+    //pthread_t thread[10];
 
-	listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    u_int yes = 1;
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
 	if(listenfd<0)
 	{
@@ -256,21 +259,13 @@ void startServer(uint16_t portNum)
 	while (1)
     {
         //multi-threading to deliver HTTP
-        if (freeThread == 0) { //create a new thread if no free threads available at the moment
-            freeThread = 1; //prevent too many threads to be produced
-            pthread_t thread;
-            pthread_create(&thread, NULL, threadWork, (void *) listenfd);
-            pthread_detach(thread);
-        }
+        connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
+        writeLog("Connection received.");
+        //multi-threading to deliver HTTP
+        pthread_t thread;
+        pthread_create(&thread, NULL, deliverHTTP, (void *) connfd);
+        pthread_detach(thread);
 	}
-}
-
-void * threadWork (void * listenfd) {
-    int connfd = accept(listenfd, (struct sockaddr *) NULL, NULL);
-    freeThread = 0; //set back the freeThread to 0 as there are no free threads left
-    writeLog("Connection received.");
-    deliverHTTP(connfd);
-    pthread_exit(NULL);
 }
 
 void * loggerThread (void * parameter) {
