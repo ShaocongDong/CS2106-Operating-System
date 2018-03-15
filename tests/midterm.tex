@@ -35,11 +35,11 @@
 \usepackage{listings}  %for code listing
 
 % $$$$$$$$$ new command and theorems self-defined
+\theoremstyle{definition}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem*{remark}{Remark}
-\theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{example}{Example}[section]
 \newtheorem{notation}{Notation}[section]
@@ -325,11 +325,216 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 
 \section{Process Management}
+\begin{definition}{\textbf{Program}}
+	consists of: Machine instructions (and possibly source code) and Data. A program exists as a file on the disk. (e.g. command.exe, MSword.exe)
+\end{definition}
 
+\begin{definition}{\textbf{Process}}
+	consists of Machine instructions (and possibly source code), Data and Context. It exists as instructions and data in memory, \textbf{may} be executing on the CPU.
+\end{definition}
 
+\begin{tcolorbox}
+	\textsf{Program vs. Process}
+	
+	A single program can produce multiple processes. (e.g. chrome.exe is a single program, but every tab in Chrome is a new process!)
 
+\end{tcolorbox}
 
+\begin{definition}{\textbf{Execution Modes}}
+	\begin{myitemize}
+		\item Programs usually run sequentially. (Each instruction is executed one after the other.)
+		\item Having multiple cores or CPUs allow parallel (''concurrent'') execution. (Streams of instructions with no dependencies are allowed to execute together.)
+		\item A multitasking OS allows several programs to run ''concurrently''. (Interleaving, or “time-slicing”)
+	\end{myitemize}
+\end{definition}
 
+\begin{remark}
+	we mostly assume number of processes $\geq$ number of CPU otherwise can have idle tasks. So each core must still switch between processes even for multi-cores, and we will assume a single processor with a single core.
+\end{remark}
+
+\begin{tcolorbox}
+	\textsf{The Process Model}
+	
+	\includegraphics[scale=0.5]{m1/processModel}
+	\centering
+	
+	\begin{myitemize}
+		\item Figure (b) shows what “appears” to be happening in a single processor system running multiple processes:
+		\begin{myitemize}
+			\item There are 4 processes each with its own program counter (PC) and registers.
+			\item All 4 processes run independently of each other at the same time.
+		\end{myitemize}
+		\item Figure (a) shows what actually happens.
+		\begin{myitemize}
+			\item There is only a single PC and a single set of registers.
+			\item When one process ends, there is a ''context switch'' or ''process switch'':
+			\begin{myitemize}
+				\item PC, all registers and other process data for Process A is copied to memory.
+				\item PC, register and process data for Process B is loaded and B starts executing, etc.
+			\end{myitemize}
+		\end{myitemize}
+		\item Figure (c) illustrates how processes A to D share CPU time.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Process States}} there are three possible states for a process
+	\begin{myitemize}
+		\item Running 
+		\begin{myitemize}
+			\item The process is actually being executed on the CPU.
+		\end{myitemize}
+		\item Ready 
+		\begin{myitemize}
+			\item The process is ready to run but not currently running. 
+			\item A ''scheduling algorithm'' is used to pick the next process for running.
+		\end{myitemize}
+		\item Blocked.
+		\begin{myitemize}
+			\item The process is waiting for ''something'' to happen so it is not ready to run yet. e.g. include waiting for inputs from another process.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{figure}[h!]
+	\includegraphics[scale=0.3]{m1/processStates}
+	\includegraphics[scale=0.3]{m1/processStates2}
+	\centering
+\end{figure}
+
+\begin{definition}{\textbf{Process Context}} (values change as a process runs)
+	\begin{myitemize}
+		\item CPU register values. 
+		\item Stack pointers.
+		\item CPU Status Word Register
+		\begin{myitemize}
+			\item This maintains information about whether the previous instruction resulted in an overflow or a ''zero'', whether interrupts are enabled, etc.
+			\item This is needed for branch instructions – assembly equivalents of ''if'' statements.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{figure}[h!]
+	\includegraphics[scale=0.6]{m1/statusRegister}
+	\centering
+\end{figure}
+
+\begin{example}{\textbf{Context Switching in FreeRTOS Atmega Port}}
+	FreeRTOS relies on regular interrupts from Timer 0 to switch between tasks. When the interrupt triggers:
+	\begin{myenumerate}
+		\item PC is placed onto Task A’s stack.
+		\item The ISR calls \textsf{portSAVECONTEXT}, resulting in Task A’s context being pushed onto the stack. 
+		\item \textsf{pxCurrentTCB} will also hold SPH/SPL after the context save.
+		\begin{myitemize}
+			\item This must be saved by the kernel.
+			\item The kernel stores a copy of the stack pointer for each task.
+		\end{myitemize}
+		\item The kernel then selects Task B to run, and copies its SPH/SPL values into \textsf{pxCurrentTCB} and calls \textsf{portRESTORE\_CONTEXT}.
+		\item The rest of \textsf{portRESTORE\_CONTEXT} is executed, causing Task B’s data to be loaded into R31-R0 and SREG. Now Task B can resume like as though nothing happened
+		\item Only Task B’s PC remains on the stack. Now the ISR exits, causing this value to be popped off onto the AVR’s PC.
+		\begin{myitemize}
+			\item PC points to the next instruction to be executed. 
+			\item End result: Task B resumes execution, with all its data and SREG intact!
+		\end{myitemize}
+	\end{myenumerate}
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{How can context switching be triggered?}
+	
+	It can be triggered by a timer; currently running process waiting for input; currently running task blocking on a synchronisation mechanism; currently running task wants to sleep for a fixed period; higher priority task becoming “READY”; $\dots$
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Process Control Block}}
+	maintains information about that process: Process ID (PID), Stack Pointer, Open files, Pending signals, CPU usage, $\dots$
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Process Life Cycle}
+	
+	\includegraphics[scale=0.3]{m1/processLifeCycle}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Creating a new process - fork()}}
+	\begin{myitemize}
+		\item Fork system call creates a new process by duplicating the current image into a new process, \textit{child process}
+		\item \textsf{same code} (executable image) is executed
+		\item Child differs only in process id (PID) and parent (PPID), fork return value
+		\item Data in child is a COPY of the parent (i.e. not shared)
+		\item In PARENT process after fork:
+		\begin{myitemize}
+			\item PC is at return from fork system call
+			\item fork return value: new child PID
+		\end{myitemize}
+		\item In CHILD process after fork:
+		\begin{myitemize}
+			\item PC is at return from fork system call
+			\item fork return value: 0
+			\item Shares open file \& signal handlers with parent, current working directory
+			\item Independent copy of: memory, arguments, environment variables (note: cloning example)
+		\end{myitemize}
+		\item fork return result is -1 if the fork failed.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{The Master Process}}
+	\begin{myitemize}
+		\item Every process has parent: \textsf{where does it stop?}
+		\item Special initial process - \textsf{init} process created in kernel at the end UNIX boot process, traditionally having PID=1.
+		\item Forking creates process tree, \textsf{init} is the root process.
+		\item \textsf{init} watches for processes and response where needed, e.g. terminal login.
+		\item \textsf{init} also manages system run levels (e.g. shutdown, power failure, single-user mode), etc. Example of a system-like process running in kernel mode.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Start/Stop a Process}}
+	\begin{myitemize}
+		\item kill() system call sends signal to process
+		\item Special process signals:
+		\begin{myitemize}
+			\item stopping process (SIGSTOP)
+			\item killing process (SIGKILL)
+			\item restart stopped process (SIGCONT)
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Terminating a process}
+	
+	\includegraphics[scale=0.33]{m1/terminatingProcess1}
+	\includegraphics[scale=0.33]{m1/terminatingProcess2}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Normal Program Termination} - \textsf{void exit(int status)} from standard C library function}
+	\begin{myitemize}
+		\item Usuall don't use \textsf{\_exit()} but \textsf{exit()}, which cleans up: open streams from C stdio library (e.g., fopen, printf) are flushed and closed
+		\item calls some exit handlers
+		\item finally calls \textsf{\_exit(status)} after all standard C cleanup done.
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	returning from \textsf{main()} implicitly calls exit. \textsf{exec} didn't actually call main directly but a startup routine. Open files also get flushed automatically.
+\end{remark}
+
+\begin{tcolorbox}
+	\textsf{Waiting for Child Processes to Terminate - process interaction}
+	
+	\includegraphics[scale=0.33]{m1/parentWait1}
+	\includegraphics[scale=0.33]{m1/parentWait2}
+	\centering
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{Zombie Process}
+	
+	\includegraphics[scale=0.30]{m1/zombieProcess1}
+	\includegraphics[scale=0.30]{m1/zombieProcess2}
+	\centering
+\end{tcolorbox}
+
+\section{Process Scheduling}
 
 
 
@@ -352,68 +557,5 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
-
-\newpage
-\begin{myitemize}
-	\item 123
-\end{myitemize}
-{\color{red} red } \textsf{sftext} \texttt{tttext}
-\begin{tcolorbox} 
-Penghao is the best \LaTeX \, writer.
-\end{tcolorbox}
-\begin{tcolorbox}
-	\begin{lstlisting}
-		def func():
-			print("Penghao is cool!")
-	\end{lstlisting}
-\end{tcolorbox}
-\noindent{}\\\noindent$\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp$\\
-{}\\
-\lipsum[1]
-
-% ---- important examples ----%
-\vspace{-\topsep}
-\begin{enumerate}
-	\item 123
-	\item 123
-	\item 123
-\end{enumerate}
-\vspace{-\topsep}
-
-\begin{center}
- \begin{tabular}{|| c || c | c | c |c |c ||} 
- \hline
-  & M1 & M2 & M3 & M4 & M5 \\ [0.5ex] 
- \hline\hline
- M1 & 0 & 108 & 180 & 228 & 396 \\ 
- \hline
- M2 &  & 0 & 72 & 168 & 288 \\
- \hline
- M3 &  &  & 0 & 48 & 144 \\
- \hline
- M4 &  &  &  & 0 & 128 \\
- \hline
- M5 &  &  & &  & 0   \\ [0.5ex] 
- \hline
-\end{tabular}
-\end{center}
-
-\begin{algorithm}
-\caption{title}
-%\begin{multicols}{2}
-\begin{algorithmic}[1]
-\State 123
-\end{algorithmic}
-%\end{multicols}
-\end{algorithm}
-
-\begin{thebibliography}{9}
- 
-\bibitem{einstein} 
-Albert Einstein. 
-\textit{Zur Elektrodynamik bewegter K{\"o}rper}. (German) 
-[\textit{On the electrodynamics of moving bodies} \url{www.google.com.sg}]. 
-Annalen der Physik, 322(10):891–921, 1905.
-\end{thebibliography}
 
 \end{document}
