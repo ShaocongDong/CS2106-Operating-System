@@ -731,6 +731,121 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 
 \section{Inter-Process Communication}
+\begin{definition}{\textbf{Race Condition}}
+	occur when two or more processes attempt to access shared storage. This causes the final outcome to depend on who runs first. ''Shared storage'' can mean:
+	\begin{myitemize}
+		\item Global variables.
+		\item Memory locations.
+		\item Hardware registers.- This refers to configuration registers rather than CPU registers.
+		\item Files.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Critical Sections} mutual exclusion - \textsf{mutex}}
+	
+	a RUNNING process is always in one of two possible ''states'':
+	\begin{myitemize}
+		\item It is performing local computation. This does not involve global storage, hence to race condition is possible.
+		\item It is reading/updating global variables. This can lead to race conditions. (it is within its ''critical section'')
+	\end{myitemize}
+\end{definition}
+
+\begin{theorem}{\textbf{FOUR rules to prevent race conditions}}
+	\begin{myenumerate}
+		\item No two processes can simultaneously be in their critical section.
+		\item No assumptions may be made about speeds or number of CPUs.
+		\begin{myitemize}
+			\item Note: We can relax this assumption for most embedded systems since they have single CPUs.
+			\item May apply to systems using multicore micro-controllers.
+		\end{myitemize}
+		\item No process outside of its critical section can block other processes.
+		\item No process should wait forever to enter its critical section.
+	\end{myenumerate}
+\end{theorem}
+
+\begin{example}{\textbf{Mutual Exclusion Implementation}}
+	\begin{myitemize}
+		\item \textbf{Disabling Interrupts}
+		\begin{myitemize}
+			\item disabling interrupts will prevent other processes from starting up and entering their critical sections.
+			\item Carelessly disabling interrupts can cause the entire system to grind to a halt.
+			\item This only works on single-processor, single core systems. Violates Rule 2.
+		\end{myitemize}
+		\item Using \textbf{Lock Variables}
+		\begin{myitemize}
+			\item A single global variable \textsf{lock} is initially 1.
+			\item Process A reads this variable and sets it to 0, and enters its critical section.
+			\item Process B reads \textsf{lock} and sees it’s a 0. It doesn’t enter critical section and waits until \textsf{lock} is 1.
+			\item Process A finishes and sets \textsf{lock} to 1, allowing B to enter
+			\item PROBLEM: There’s a race condition on \textsf{lock}  itself.
+			\item \textbf{Test and Set Lock} (\textsf{TSL})
+			\begin{myitemize}
+				\item CPU locks the address and data buses, and reads ''lock'' from memory. The locked address and data buses will block accesses from all other CPUs. (''atomic''. This means that NOTHING can interrupt execution of this instruction. This is guaranteed in hardware.)
+				\item The current value is written into register ''reg''.
+				\item A ''1'' (or sometimes ''0'') value is written to ''lock''.
+				\item CPU unlocks the address and data buses.
+				\item ALTERNATIVE: the XCHG instruction, used on Intel machines. Swaps contents of ''lock'' and ''reg'' instead of just writing ''1'' to lock.
+			\end{myitemize}
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{Busy-wait approaches like Peterson and TSL/XCHG have a problem called \textbf{deadlock}.} Consider two processes H and L, and a scheduler rule that says that H is always run when it is READY. Suppose L is currently in the critical region.
+			\begin{myenumerate}
+				\item H becomes ready, and L is pre-empted.
+				\item H tries to obtain a lock, but cannot because L is in the critical region.
+				\item H loops forever, and CPU control never gets handed to L.
+				\item As a result L never releases the lock.
+			\end{myenumerate}
+		\end{tcolorbox}
+		\item \textbf{Sleep/Wake}
+		\begin{myitemize}
+			\item When a process finds that a lock has been set (i.e. another process in the critical section), it calls ''sleep'' and is put into the blocked state.
+			\item When the other process exits the critical section and clears the lock, it can call ''wake'' which moves the blocked process into the READY queue for eventual execution.
+		\end{myitemize}
+		\begin{myitemize}
+			\item \textsf{producer-consumer problem}: Deadlock occurs when:
+			\begin{myenumerate}
+				\item Consumer checks ''count'' and finds it is 0.
+				\item Consumer gets pre-empted and producer starts up.
+				\item Producer adds an item, increments count to ''1'', then sends  a WAKE to the consumer. (Since consumer is not technically sleeping yet, the WAKE is lost.)
+				\item Consumer starts up, and since count is 0, goes to SLEEP.
+				\item Producer starts up, fills buffer until it is full and SLEEPs.
+				\item Since consumer is also SLEEPing, no one wakes the producer. Deadlock.
+			\end{myenumerate}
+		\end{myitemize}
+		\item \textbf{Semaphores}, a special lock variable that counts the number of wake-ups saved for future use.
+		\begin{myitemize}
+			\item  A value of “0” indicates that no wake-ups have been saved.
+			\item Two ATOMIC operations on semaphores:
+			\begin{myitemize}
+				\item DOWN, TAKE, PEND or P: If the semaphore has a value of $>0$, it is decremented and the DOWN operation returns. If the semaphore is 0, the DOWN operation blocks.
+				\item UP, POST, GIVE or V: If there are any processes blocking on a DOWN, one is selected and woken up. Otherwise UP increments the semaphore and returns.
+			\end{myitemize}
+			\item When a semaphore’s counting ability is not needed, we can use a simplified version called a “mutex”. (1 = Unlocked. 0 = Locked.)
+			\item non\_critical\_section() $\rightarrow$ DOWN(sema) $\rightarrow$ critical\_section() $\rightarrow$ UP(sema)
+			\item We can also implement mutexes with \textsf{TSL} or \textsf{XCHG}. 0 = Unlocked, 1 = Locked
+			\begin{figure}[!h]
+				\includegraphics[scale=0.4]{m1/mutexWithTSL}
+				\centering
+			\end{figure}
+			\begin{tcolorbox}
+				\textsf{Problems with Semaphores Deadlock}
+				
+				\includegraphics[scale=0.52]{m1/producerConsumerCode1}
+				\includegraphics[scale=0.52]{m1/producerConsumerCode2}
+				\centering
+			\end{tcolorbox}
+			\item Producer successfully DOWNs the mutex.
+			\item Producer DOWNs “empty”. However the queue is full so this blocks.
+			\item Consumer DOWNs mutex and blocks.
+			\begin{myitemize}
+				\item Consumer now never reaches the UP for “empty” and therefore cannot unblock the producer.
+				\item The producer in turn never reaches the UP for mutex and cannot unblock the consumer. Deadlock!
+			\end{myitemize}
+		\end{myitemize}
+	\end{myitemize}
+\end{example}
+
+
 
 
 
