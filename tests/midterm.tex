@@ -6,9 +6,9 @@
  \geometry{
  a4paper,
  %total={170mm,257mm},
- left=20mm,
+ left=10mm,
  top=20mm,
- right=20mm,
+ right=10mm,
  bottom=20mm,
  }
  		%$$$$$$ fonts settings $$$$$$%
@@ -46,7 +46,7 @@
 \newtheorem{algoalgorithm}{Algorithm}[section]
 
 % $$$$$$$$ set general info $$$$$$$
-\title{\textbf{Document}}
+\title{\textsl{National University of Singapore} \\ \textbf{CS2106 Operating System}\\ Midterm Summary Notes}
 \author{\textit{Dong Shaocong} A0148008J}
 
 % $$$$$$$$ package parameter setting $$$$$$$$$
@@ -104,11 +104,259 @@
 \begin{document}
 \maketitle
 
+\section{Basic Idea}
+\begin{definition}{\textbf{Operating System}}
+	is a suite (i.e. a collection) of specialised software that:
+	\begin{myitemize}
+		\item Gives you access to the hardware devices like disk drives, printers, keyboards and monitors.
+		\item Controls and allocate system resources like memory and processor time.
+		\item Gives you the tools to customise your and tune your system.
+	\end{myitemize}
+\end{definition}
+\begin{example}
+	LINUX, OS X (or MAC OS, a variant of UNIX), Windows 8
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{What are Operating System?} It usually consists of several parts. (\textsf{Onion Model})
+	
+	\begin{myitemize}
+		\item Bootloader – First program run by the system on start-up. Loads remainder of the OS kernel. 
+		\begin{myitemize}
+			\item On Wintel systems this is found in the Master Boot Record (MBR) on the hard disk.
+		\end{myitemize}
+		\item Kernel – The part of the OS that runs almost continuously. 
+		\item System Programs – Programs provided by the OS to allow:
+		\begin{myitemize}
+		\item Access to programs.
+		\item Configuration of the OS.
+		\item System maintenance, etc.
+		\end{myitemize}
+	\end{myitemize}
+		\includegraphics[scale=0.5]{m1/onionModel}
+		\centering
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{Abstraction Layer \& Opearating System Structure}
+	
+	\includegraphics[scale=0.3]{m1/operatingSystemStructure}
+		\centering
+	\includegraphics[scale=0.4]{m1/abstractionLayerDescription}
+		\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Boostrapping}}
+	\begin{myitemize}
+	\item The \textbf{OS is not present in memory} when a system is “cold started”.
+	\begin{myitemize}
+		\item When a system is first started up, memory is completely empty.
+	\end{myitemize}
+	\item We start first with a \textbf{bootloader} to get an operating system into memory.
+	\begin{myitemize}
+	\item Tiny program in the first (few) sector(s) of the hard-disk.
+	\item The first sector is generally called the “boot sector” or “master boot record” for this reason.
+	\item Job is to load up the main part of the operating system and start it up.
+	\end{myitemize}
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Core}}
+	CPU units that can execute processes, because we have much more number of processes than the number of cores, we have to do \textbf{context switching} to share a core very quickly between different processes.
+	\begin{myitemize}
+		\item Entire sharing must be transparent.
+		\item Processes can be suspended and resumed arbitrarily.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Context switching}}
+	\begin{myenumerate}
+		\item Save the \textsf{context} of the process to be suspended.
+		\item Restore the \textsf{context} of the process to be (re)started.
+		\item Issues of \textsf{scheduling} to decide which process to run.
+	\end{myenumerate}
+\end{definition}
+
+\begin{definition}{\textbf{File system}}
+	A set of data structures on disk and within the OS kernel memory to organise persistent data.
+\end{definition}
+
+\begin{tcolorbox}
+\textsf{How OS file system works?}
+
+	\includegraphics[scale=0.3]{m1/fileSystem}
+	\centering
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{Hardware Interfaces}
+	
+	\includegraphics[scale=0.3]{m1/hardwareDevice}
+	\centering
+	\includegraphics[scale=0.4]{m1/hardwareController}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Memory}}
+	static/dynamic (\textsf{new, delete, malloc, free}). Memory to store instructions
+Memory to store data.
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Memory Management}
+	
+	\includegraphics[scale=0.3]{m1/memoryManagement}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Virtual Memory management}}
+\begin{myitemize}
+	\item For cost/speed reasons memory is organized in a hierarchy:
+	\begin{figure}[h!]
+		\includegraphics[scale=0.6]{m1/memoryHirarchy}
+		\centering
+	\end{figure}
+	\item The lowest level is called ''virtual memory'' and is the slowest but cheapest memory.
+	\begin{myitemize}
+	\item Actually made using hard-disk space!
+	\item Allows us to fit much more instructions and data than memory allows!
+	\end{myitemize}
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{OS security}}
+	\begin{myitemize}
+		\item Data (files): Encryption techniques, Access control lists
+		\item Resources: Access to the hardware (biometric, passwords, etc), Memory access, File access, etc.
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Writing an OS (BSD Unix)}
+	
+	\includegraphics[scale=0.3]{m1/writingOS}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Kernel}}
+	\begin{myitemize}
+		\item \textsf{Monolithic Kernel} (Linux, MS Windows)
+		\begin{myitemize}
+			\item All major parts of the OS-devices drivers, file systems, IPC, etc, running in ''kernel space'' (an elevated execution mode where certain privileged operations are allowed).
+			\item Bits and pieces of the kernel can be loaded and unloaded at runtime (e.g. using ''modprobe'' in Linux)
+			\begin{figure}[h!]
+				\includegraphics[scale=0.35]{m1/monolithicKernels}
+				\centering
+			\end{figure}
+		\end{myitemize}
+		\item \textsf{MicroKernel} (Mac OS)
+		\begin{myitemize}
+			\item Only the ''main'' part of the kernel is in ''kernel space'' (Contains the important stuff like the scheduler, process management, memory management, etc.)
+			\item The other parts of the kernel operate in ''user space'' as system services: The file systems, USB device drivers, Other device drivers.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{External View of an OS}
+	\begin{myitemize}
+		\item The kernel itself is not very useful. (Provides key functionality, but need a way to access all this functionality.)
+		\item We need other components:
+		\begin{myitemize}
+			\item System libraries (e.g. stdio, unistd, etc.)
+			\item System services (creat, read, write, ioctl, sbrk, etc.)
+			\item OS Configuration (task manager, setup, etc.)
+			\item System programs (Xcode, vim, etc.)
+			\item Shells (bash, X-Win, Windows GUI, etc.)
+			\item Admin tools (User management, disk optimization, etc.)
+			\item User applications (Word, Chrome, etc).
+		\end{myitemize}
+	\end{myitemize}
+	
+\end{tcolorbox}
+
+\begin{definition}{\textbf{System Calls}}
+	calls made to the “Application Program Interface” or API of the OS.
+	\begin{myitemize}
+		\item UNIX  and similar OS mostly follow the POSIX standard. (Based on C. Programs become more portable.) \textit{POSIX: portable operating system interface for UNIX, minimal set of system calls for application portability between variants of UNIX}.
+		\item Windows follows the WinAPI standard. (Windows 7 and earlier provide Win32/Win64, based on C.
+Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{\textbf{User mode + Kernel mode}}
+	\begin{myitemize}
+		\item Programs (process) run in user mode.
+		\item During system calls, running kernel code in kernel mode.
+		\item After system call, back to user mode.
+	\end{myitemize}
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{How to switch mode?} Use privilege mode to switching instructions:
+	\begin{myitemize}
+		\item syscall instruction
+		\item software interrupt - instruction which raises specific interrupt from software.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{example}{\textbf{LINUX system call}}
+	\begin{myitemize}
+		\item User mode: (outside kernel)
+		\begin{myitemize}
+			\item C function wrapper (eg. \textbf{getpid()}) for every system call in C library.
+			\item assembler code to setup the system call no, arguments
+			\item trap to kernel	
+		\end{myitemize}
+		\item Kernel mode: (inside kernel)
+		\begin{myitemize}
+			\item dispatch to correct routine
+			\item check arguments for errors (eg. invalid argument, invalid address, security violation)
+			\item do requested service
+			\item return from kernel trap to user mode
+		\end{myitemize}
+		\item User mode: (Outside kernel)
+		\begin{myitemize}
+			\item returns to C wrapper - check for error return values
+		\end{myitemize}
+	\end{myitemize}
+\end{example}
+
+
+
+\section{Process Management}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
-\newpage
 
+\newpage
+\begin{myitemize}
+	\item 123
+\end{myitemize}
 {\color{red} red } \textsf{sftext} \texttt{tttext}
 \begin{tcolorbox} 
 Penghao is the best \LaTeX \, writer.
