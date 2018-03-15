@@ -536,22 +536,201 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 \section{Process Scheduling}
 
+\begin{definition}{\textbf{Computer jobs}}
+	Computatings + reading/writing memory + input/output.
+	\begin{myitemize}
+		\item CPU bound
+		\begin{myitemize}
+			\item Most of the time spent on processing on CPU
+			\item Graphics-intensive applications are considered to be ''CPU'' bound.
+			\item Multitasking opportunities come from having to wait for processing results.
+		\end{myitemize}
+		\item I/O bound
+		\begin{myitemize}
+			\item Most of the time is spent on communicating with I/O devices
+			\item Multitasking opportunities come from having to wait for data from I/O devices.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Process states - scheduler involvement}
+	
+	\includegraphics[scale=0.4]{m1/processSchedulerStates}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Types of Multitaskers}}
+	\begin{myitemize}
+		\item Batch Processing (Not actually multitasking since only one process runs at a time to completion.)
+		\item Co-operative Multitasking (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time.)
+		\item Pre-emptive Multitasking (Currently running processes can be forcefully suspended by the scheduler.)
+		\item Real-Time Multitasking (Processes have fixed deadlines that must be met.)
+		\begin{myitemize}
+			\item Hard Real Time Systems: Disaster strikes! System fails, possibly catastrophically!
+			\item Soft Real Time Systems: Mostly just an inconvenience. Performance of system is degraded
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	Policies are determined by the kind of multitasking environment.
+\end{remark}
+
+\begin{definition}{\textbf{Scheduling Policies} - enforce a priority ordering over processes}
+	\begin{myitemize}
+		\item \textbf{Fixed Priority} for all kinds of multitaskers
+		\begin{myitemize}
+			\item Each task is assigned a priority by the programmer. (usually priority number 0 has the highest priority.)
+			\item Tasks are queued according to priority number.
+			\item Batch, Co-operative: Task with highest priority is picked to be run next.
+			\item Pre-emptive, Real-Time: When a higher priority task becomes ready, current task is suspended and higher priority task is run.
+		\end{myitemize}
+		\item Policies for \textbf{Batch Processing}
+		\begin{myitemize}
+			\item First-come First Served (\textsf{FCFS})
+			\begin{myitemize}
+				\item Arriving jobs are stored in a queue.
+				\item Jobs are removed in turn and run.
+				\item Particularly suited for batch systems.
+				\item Extension for interactive systems: Jobs removed for running are put back into the back of the queue. This is also known as “round-robin scheduling”.
+				\item Starvation free as long as earlier jobs are bounded.
+			\end{myitemize}
+			\item Shortest Job First (\textsf{SJF})
+			\begin{myitemize}
+				\item Processes are ordered by total CPU time used.
+				\item Jobs that run for less time will run first.
+				\item Reduces average waiting time if number of processes is fixed.
+				\item Potential for starvation.
+			\end{myitemize}
+		\end{myitemize}
+		\item Policies for \textbf{Co-operative Multitasking}
+		\begin{myitemize}
+			\item Round Robin with Voluntary Scheduling (\textsf{VS})
+			\item \textbf{Voluntary Scheduling}: Processes call a special “yield” function. This invokes the scheduler. Causes the process to be suspended and another process started up.
+		\end{myitemize}
+		\item Policies for \textbf{Pre-emptive multitasking}
+		\begin{myitemize}
+			\item Round Robin with Timer (\textsf{RR})
+			\begin{myitemize}
+				\item Each process is given a fixed time slot $c_i$.
+				\item After time $c_i$, scheduler is invoked and next task is selected on a round-robin basis.
+			\end{myitemize}
+			\item Shortest Remaining Time (\textsf{SRT})
+			\begin{myitemize}
+				\item Pre-emptive form of SJF.
+				\item Processes are ordered according to remaining CPU time left.
+			\end{myitemize}
+		\end{myitemize}
+		\item Policies for \textbf{Real-Time Multitaskers}
+		\begin{myitemize}
+			\item Rate Monotonic Scheduling (\textsf{RMS})
+			\begin{myitemize}
+				\item Processes are prioritized according to $P_i$, Shortest period = highest priority.
+				\item \textbf{Critical Instance Analysis} is used to test that all processes meet their deadlines
+			\end{myitemize}
+			\item Earliest Deadline First Scheduling (\textsf{EDF})
+			\begin{myitemize}
+				\item Processes are prioritized according to who is closest to their respect deadlines.
+				\item All processes are guaranteed to meet their deadlines as long as: $U=\sum^n_{i=1}\dfrac{C_i}{T_i} \leq 1$
+				\item There is no context switching for processes, each process will run till the end if gets started.
+			\end{myitemize}
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{remark}{\textbf{Real Time Scheduling}}
+	must guarantee that processes complete within time limits.
+	
+	\begin{myitemize}
+		\item Time limits are called “deadlines”
+		\item Processes are assumed to be periodic with period $P_i$ for process i.
+		\item Processes are assumed to use a fixed amount of CPU time $C_i$ each time.
+		\item Deadline $D_i$ is assumed to be the same as period $P_i$. (if a process runs at time $T_i$, it must finish running by $D_i=T_i+P_i$, If it doesn’t, process has missed its deadline.) $T_i$ is the process or task arriving time.
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{Critical Instance Analysis for} \textsf{RMS}}
+	\begin{myenumerate}
+		\item Sort T by period of each task, if T is not already sorted. (We will assume that $T_1$ has the shortest period, $T_2$ has the $2^{nd}$ shortest, etc.)
+		\item For each task $T_i \in T$, recursively compute $S_{i0}, S_{i1}, \dots$ where:
+		\[ S_{i,0}=\sum^i_{j=1}C_j; S_{i,(x+1)}=C_i+\sum^{i-1}_{j=1}C_j\times \ceil{\frac{S_{i,x}}{P_j}}  \]
+		\item Stop when $S_{i,(x+1)}=S_{i,x}$. Call this $S_{i,(x+1)}$ the final value $S_{i,F}$ (termination value).
+		\item If $S_{i,F}<D_i (=T_i+P_i)$, then the task i is schedulable and will not miss its deadlines.
+	\end{myenumerate}
+\end{definition}
+
+\begin{example}{\textbf{Managing Multiple Policies}}
+	Multiple policies can be implemented on the same machine using multiple queues:
+	\begin{myitemize}
+		\item Each queue can have its own policy.
+		\item This scheme is used in Linux, as we will see shortly.
+	\end{myitemize}
+\end{example}
+
+\begin{example}{\textbf{Scheduling in Linux}}
+	\begin{myitemize}
+		\item Processes in Linux are dynamic:
+		\begin{myitemize}
+			\item New processes can be created with \textsf{fork()}
+			\item Existing processes can exit.
+		\end{myitemize}
+		\item Priorities are also dynamic:
+		\begin{myitemize}
+			\item Users and superusers can change priorities using ''nice'' values.
+			\item \textsf{nice –n 19 tar cvzf archive.tgz *} (Allows tar to run with a priority lowered by 19 to reduce CPU load. Normal users can only $0\leq n \leq 19$. Superusers can specify $-20\leq n \leq 19$. Negative nice increases priority.)
+		\end{myitemize}
+		\item Linux maintains \textbf{three types of processes}:
+		\begin{myitemize}
+			\item \textbf{Real-time FIFO}: \textsf{RT-FIFO} processes cannot be pre-empted except by a higher priority \textsf{RT-FIFO} process.
+			\item \textbf{Real-time Round-Robin}: Like \textsf{RT-FIFO} but processes are pre-empted after a time slice.
+			\item Linux only has ''soft real-time'' scheduling. (Priority levels 0 to 99) Cannot guarantee deadlines, unlike \textsf{RMS} and \textsf{EDF}. 
+			\item Non-real time processes (Priority levels 100 to 139)
+		\end{myitemize}
+		\item Linux maintains 280 queues in two sets of 140: An active set, an expired set.
+		\item The scheduler is called at a rate of 1000 Hz. (e.g. time tick is 1 ms, called a ''jiffy''.) \textsf{RT-FIFO} processes are \textbf{always} run if any are available. Otherwise:
+		\begin{myitemize}
+			\item Scheduler picks highest priority process in active set to run.
+			\item When its “time quantum” is expired, it is moved to the expired set. Next highest priority process is picked.
+			\item When active set is empty, active and expired pointers are swapped. Active set becomes expired set and vice versa.
+			\item Scheme ensures no starvation of lowest priority processes.
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{What happens if a process becomes blocked? (e.g. on I/O)}
+			
+			\begin{myitemize}
+				\item CPU time used so far is recorded. Process is moved to a queue of blocked processes.
+				\item When process becomes runnable again, it continues running until its time quantum is expired.
+				\item It is then moved to the expired set.
+				\item When a process becomes blocked its priority is often upgraded (see later). 
+			\end{myitemize}
+		\end{tcolorbox}
+		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 – 800 ms, Priority level 139 – 5 ms, System load
+		\item How process priorities are calculated: Priority = base + f(nice) + g(cpu usage estimate)
+		\begin{myitemize}
+			\item $f(.) =$ priority adjustment from nice value.
+			\item $g(.) =$ Decay function. Processes that have already consumed a lot of CPU time are downgraded.
+			\item Other heuristics are used: Age of process, More priority for processes waiting for I/O - I/O boost, Bias towards foreground tasks.
+		\end{myitemize}
+		\item \textbf{I/O Boost}
+		\begin{myitemize}
+			\item Tasks doing read() has been waiting for a long time. May need quick response when ready.
+			\item Blocked/waiting processes have not run much.
+			\item Applies also to interactive processes – blocked on keyboard/mouse input.
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{How long does this boost last?}
+			\begin{myitemize}
+				\item Temporary boost for sporadic I/O
+				\item Permanent boost for the chronically I/O bound?
+				\item E.g. Linux gives -5 boost for interactive processes.
+				\item Implementation: We can boost time quantum, boost priority, do both.
+			\end{myitemize}
+		\end{tcolorbox}
+	\end{myitemize}
+\end{example}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+\section{Inter-Process Communication}
 
 
 
