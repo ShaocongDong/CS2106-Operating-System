@@ -44,6 +44,7 @@
 \newtheorem{example}{Example}[section]
 \newtheorem{notation}{Notation}[section]
 \newtheorem{algoalgorithm}{Algorithm}[section]
+\newtheorem{method}{Method}[section]
 
 % $$$$$$$$ set general info $$$$$$$
 \title{\textsl{National University of Singapore} \\ \textbf{CS2106 Operating System}\\ Midterm Summary Notes}
@@ -576,7 +577,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	Policies are determined by the kind of multitasking environment.
 \end{remark}
 
-\begin{definition}{\textbf{Scheduling Policies} - enforce a priority ordering over processes}
+\begin{method}{\textbf{Scheduling Policies} - enforce a priority ordering over processes}
 	\begin{myitemize}
 		\item \textbf{Fixed Priority} for all kinds of multitaskers
 		\begin{myitemize}
@@ -636,7 +637,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\end{myitemize}
 		\end{myitemize}
 	\end{myitemize}
-\end{definition}
+\end{method}
 
 \begin{remark}{\textbf{Real Time Scheduling}}
 	must guarantee that processes complete within time limits.
@@ -649,7 +650,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\end{myitemize}
 \end{remark}
 
-\begin{definition}{\textbf{Critical Instance Analysis for} \textsf{RMS}}
+\begin{method}{\textbf{Critical Instance Analysis for} \textsf{RMS}}
 	\begin{myenumerate}
 		\item Sort T by period of each task, if T is not already sorted. (We will assume that $T_1$ has the shortest period, $T_2$ has the $2^{nd}$ shortest, etc.)
 		\item For each task $T_i \in T$, recursively compute $S_{i0}, S_{i1}, \dots$ where:
@@ -657,15 +658,15 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item Stop when $S_{i,(x+1)}=S_{i,x}$. Call this $S_{i,(x+1)}$ the final value $S_{i,F}$ (termination value).
 		\item If $S_{i,F}<D_i (=T_i+P_i)$, then the task i is schedulable and will not miss its deadlines.
 	\end{myenumerate}
-\end{definition}
+\end{method}
 
-\begin{example}{\textbf{Managing Multiple Policies}}
+\begin{method}{\textbf{Managing Multiple Policies}}
 	Multiple policies can be implemented on the same machine using multiple queues:
 	\begin{myitemize}
 		\item Each queue can have its own policy.
 		\item This scheme is used in Linux, as we will see shortly.
 	\end{myitemize}
-\end{example}
+\end{method}
 
 \begin{example}{\textbf{Scheduling in Linux}}
 	\begin{myitemize}
@@ -828,7 +829,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\centering
 			\end{figure}
 			\begin{tcolorbox}
-				\textsf{Problems with Semaphores Deadlock}
+				\textsf{Problems with Semaphores: Deadlock} (on the left is the correct version)
 				
 				\includegraphics[scale=0.52]{m1/producerConsumerCode1}
 				\includegraphics[scale=0.52]{m1/producerConsumerCode2}
@@ -839,15 +840,240 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\item Consumer DOWNs mutex and blocks.
 			\begin{myitemize}
 				\item Consumer now never reaches the UP for “empty” and therefore cannot unblock the producer.
-				\item The producer in turn never reaches the UP for mutex and cannot unblock the consumer. Deadlock!
+				\item The producer in turn never reaches the UP for mutex and cannot unblock the consumer. \textbf{Deadlock!}
 			\end{myitemize}
+			\begin{tcolorbox}
+				\textsf{Reusable/Consumable Resources}
+				\begin{myitemize}
+					\item Reusable Resources - usually causes deadlocks
+					\begin{myitemize}
+						\item Examples: memory, devices, files, tables 
+						\item Number of units is \textbf{constant}
+						\item Unit is either free or allocated; \textbf{no sharing} (no simultaneous using) 
+						\item Process \textbf{requests, acquires, releases units}
+					\end{myitemize}
+					\item Consumable Resources
+					\begin{myitemize}
+						\item Examples: messages, signals
+						\item Number of units \textbf{varies} at runtime 
+						\item Process \textbf{releases} (create) units (without acquire) 
+						\item Other process \textbf{requests} and \textbf{acquires} (consumes)
+						\item Deadlock when A and B are waiting for each other's message/ signal $\dots$
+					\end{myitemize}
+				\end{myitemize}
+			\end{tcolorbox}
 		\end{myitemize}
 	\end{myitemize}
 \end{example}
 
+\begin{theorem}{\textbf{Dealing with deadlocks}}
+	\begin{myenumerate}
+		\item \textbf{Detection and Recovery}: Allow deadlock to happen and eliminate it
+		\item \textbf{Avoidance (dynamic)}: Runtime checks disallow allocations that might lead to deadlocks
+		\item \textbf{Prevention (static)}: Restrict type of request and acquisition to make deadlock impossible
+	\end{myenumerate}
+\end{theorem}
+
+\begin{theorem}{\textbf{Conditions for Deadlock}}
+	\begin{myenumerate}
+		\item Mutual exclusion: Resources not sharable
+		\item Hold and wait: Process must be \textbf{holding one} resource while \textbf{requesting another}
+		\item Circular wait: \textbf{At least 2} processes must be blocked on each other
+	\end{myenumerate}
+\end{theorem}
+
+\begin{method}{\textbf{Deadlock Prevention}}
+	\begin{myenumerate}
+		\item Eliminate mutual exclusion
+		\begin{myitemize}
+			\item Not possible in most cases
+			\item Spooling makes I/O devices sharable
+		\end{myitemize}
+		\item Eliminate hold-and-wait 
+		\begin{myitemize}
+			\item \textbf{Request} all \textbf{resources at once}
+			\item \textbf{Release} all resources \textbf{before a new request}
+			\item \textbf{Release} all resources if \textbf{current request blocks}
+		\end{myitemize}
+		\item Eliminate circular wait
+		\begin{myitemize}
+			\item Order all resources
+			\item Process must request in \textbf{ascending order}
+		\end{myitemize}
+	\end{myenumerate}
+\end{method}
+
+\begin{tcolorbox}
+	\textsf{Problems with Semaphores: Priority Inversion}	priority(Process C) $<$ priority(Process B) $<$ priority(Process A), Process B effectively blocks out Process A, although Process A has higher priority!
+	
+	\includegraphics[scale=0.5]{m1/priorityInversion}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Monitor}}, similar to a class or abstract-data type in C++ or JAVA:
+	\begin{myitemize}
+		\item \textbf{Collection of procedures}, variables and data structures grouped together in a package. Access to variables and data possible only through methods defined in the monitor.
+		\item However, \textbf{only one} process can be active in a monitor at any point in time. I.e. if any other process tries to call a method within the monitor, it will block until the other process has exited the monitor.
+		\item \textbf{Implementation}: (mutexes or binary semaphores)
+		\begin{myitemize}
+			\item When a process calls a monitor method, the method first checks to see if any other process is already using it. 
+			\item If so, the calling process blocks until the other process has exited the monitor.
+			\item The mutex/semaphore operations are inserted by the compiler itself rather than by the user, reducing the likelihood of errors.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Condition Variable} - mechanisms for coordination}
+	\begin{myenumerate}
+		\item One process WAITs on a condition variable and blocks.
+		\item Another process SIGNALs on the same condition variable, unblocking the WAITing process.
+	\end{myenumerate}
+\end{definition}
+
+\begin{tcolorbox}
+	\includegraphics[scale=0.4]{m1/producerConsumerMonitor1}
+	\includegraphics[scale=0.4]{m1/producerConsumerMonitor2}
+	\centering	
+	
+	Similar to Sleep/Wake, however, the mutual exclusion from the monitor prevents the SIGNAL from being lost! 
+\end{tcolorbox}
+
+	\textsf{Monitors and Condition Variables Problems} - Violation of mutual exclusion
+	\begin{myitemize}
+		\item When a process encounters a WAIT, it is blocked and another process is allowed to enter the monitor.
+		\item When there’s a SIGNAL, the sleeping process is woken up.
+		\item We will potentially now have two processes in the monitor at the same time:
+		\begin{myitemize}
+			\item The process doing the SIGNAL (the signaler).
+			\item The process that just woke up because of the SIGNAL (the signaled).
+		\end{myitemize}
+	\end{myitemize}
+
+	\textsf{Ways to resolve}
+	\begin{myitemize}
+		\item We require that the signaler exits immediately after calling SIGNAL.
+		\item We suspend the signaler immediately and resume the signaled process.
+		\item We suspend the signaled process until the signaler exits, and resume the signaled process only after that.
+	\end{myitemize}
+	
+\begin{remark}{\textbf{Comparison between semaphore and condition variable}}
 
 
+	\noindent \textsf{Semaphore}
+	\begin{myitemize}
+		\item If Process A UPs a semaphore with no pending DOWN, the UP is saved.
+		\item The next DOWN operation will not block because it will match immediately with a preceding UP.
+	\end{myitemize}
+	\textsf{Condition variable}
+	\begin{myitemize}
+		\item If Process A SIGNALs a condition variable with no pending WAIT, the SIGNAL is simply lost.
+		\item This is similar to the SLEEP/WAKE problem earlier on.
+	\end{myitemize}
+\end{remark}
 
+\begin{definition}{\textbf{Barrier}}
+	is a special form of synchronization mechanism that works with groups of processes rather than single processes.
+	\begin{center}
+		\includegraphics[scale=0.5]{m1/barrier}
+	\end{center}
+	
+	The idea of a barrier is that all processes must reach the barrier (signifying the end of one phase of computation) before any of them are allowed to proceed.
+	\begin{myitemize}
+		\item Process D reaches the end of the current phase and calls a BARRIER primitive in the OS. It gets blocked.
+		\item Similarly processes A and B reach the end of the current phase, calls the same BARRIER primitive and is blocked.
+		\item Finally process C reaches the end of its computation, calls the BARRIER primitive, causing all processes to be unblocked at the same time.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{UNIX Pipe}}
+	\begin{myitemize}
+		\item A pipe provides synchronisation
+	\begin{myitemize}
+		\item A process reading a pipe will block until there is data.
+		\item Data send is asynchronous but blocks when buffer is full.
+	\end{myitemize}
+	\item A pipe provides byte-level message transfer between processes.
+	\item Traditional method of communication between processes in UNIX: \textsf{Shell pipelines}
+	\begin{myitemize}
+		\item \textsf{grep buffer *.c $|$ sort -u $|$ wc}
+		\item Output from program to left of bar provides input to program on right.
+		\item Meaning: search for occurrences of string ''buffer'' in C files (grep process), sort those lines making them unique (sort process), and count how many occurrences  (wc process)
+	\end{myitemize}
+	\begin{center}
+		\includegraphics[scale=0.4]{m1/unixPipe}
+	\end{center}
+	\item Creating pipes: \textsf{int pipe(int fd\_array[])} returns 2 file descriptor for the (anonymous) pipe
+	\begin{myitemize}
+		\item Data is sent/received using normal write/read system calls
+		\item write on \textsf{fd[1]}, read on \textsf{fd[0]}, e.g., \textsf{fd[1]} is the write end, \textsf{fd[0]} is the read end.
+		\begin{center}
+			\includegraphics[scale=0.5]{m1/creatingPipe}
+		\end{center}
+		\item Some versions of Unix support duplex pipes, can readwrite on either end -- with corresponding write/read on opposite end; other Unixes only have one way pipes
+		\item \textbf{File Descriptor}: a reference to a file when making system call, come from opening a file with \textsf{open()} system call but also other system calls which deal with files such as \textsf{pipe()}
+	\end{myitemize}
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	\begin{myitemize}
+		\item Closing unused pipe descriptor is good practice (not necessary to close all unused pipe descriptors).
+		\item Closing the write end of the pipe, allows reader to determine when there is no more data: when all pipe ends closed, read gives EOF.
+		\item Data read is the minimum of what is available and requested size. (e.g., \textsf{buffer} size is 100 but the string written was 10 chats)
+		\item Pipes only used for unstructured byte streams.
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{FIFO files (Named pipes)}}
+	\begin{myitemize}
+		\item \textbf{Anonymous pipe}: can only use between related processes, e.g., parent + children.
+		\item FIFO files are named pipes, pipes with a filename.
+		\item Exist independent of process: any processes can use FIFO
+		\item FIFO is a special file since it's really a pipe, cannot seek, no data is written to filesystem, every open FIFO corresponds to 1 pipe object.
+		\item Can be created with \textsf{mkfifo} shell command or \textsf{mknod()} system call.
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{Shell named pipe}
+	\begin{myenumerate}
+		\item \textsf{mkfifo pipe; ls -l $>$ pipe}
+		\item \textsf{cat pipe} (in another shell login)
+	\end{myenumerate}
+\end{example}
+
+\begin{example}{Programming named pipe}
+
+\noindent\begin{minipage}{.48\textwidth}
+\begin{lstlisting}[caption=writer.c,frame=tlrb,language=C]{Name}
+    int fd;
+    char * myfifo = "/tmp/myfifo";
+
+    mkfifo(myfifo, 0666);
+
+    fd = open(myfifo, O_WRONLY);
+    write(fd, "Hi", sizeof("Hi"));
+    close(fd);
+
+    /* remove the FIFO */
+    unlink(myfifo);
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.48\textwidth}
+\begin{lstlisting}[caption=reader.c,frame=tlrb,language=C]{Name}
+    int fd;
+    char * myfifo = "/tmp/myfifo";
+    char buf[MAX_BUF];
+
+    /* open, read, and display */
+    fd = open(myfifo, O_RDONLY);
+    read(fd, buf, MAX_BUF);
+    printf("Received: %s\n", buf);
+    close(fd);
+
+\end{lstlisting}
+\end{minipage}
+\textbf{Note}: When only one program is run it will hang. writer.c blocks at the ''write'' statement, which means it will not call unlink to delete the named pipe until the reader has read the pipe.
+
+\end{example}
 
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
