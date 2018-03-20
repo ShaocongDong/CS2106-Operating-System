@@ -138,6 +138,12 @@
 		\centering
 \end{tcolorbox}
 
+\begin{definition}{\textbf{Micro-coding}}
+	CPU designers implement a set of basic operations directly in hardware, then create a ''microcode'' – a language – that uses these operations to create complex machine instructions. (\textbf{Reason}: some instructions are too complex to do properly in hardware (e.g. the Intel string and block operations).)
+\end{definition}
+
+
+
 \begin{tcolorbox}
 	\textsf{Abstraction Layer \& Opearating System Structure}
 	
@@ -176,6 +182,21 @@
 		\item Restore the \textsf{context} of the process to be (re)started.
 		\item Issues of \textsf{scheduling} to decide which process to run.
 	\end{myenumerate}
+\end{definition}
+
+\begin{definition}{\textbf{special register} Machine Status Word (MSW) or Status Register (SREG)}
+\begin{figure}[!h]
+	\includegraphics[scale=0.2]{m1/machineStatusWord}
+	\centering
+\end{figure}
+
+	We can see that it contains flags that tell us the results of a previous arithmetic operation. E.g. Zero (ZF) tells us if a subtract resulted in a 0, Sign (SF) tells us if it resulted in a negative number. The Carry flag (CF) tells us if an addition resulted in a carry, the Overflow flag (OF) tells us if an overflow resulted (which means the results could be invalid), etc.
+	
+	The ZF and SF are necessary for branch instructions. E.g. for a branch on less than (BLT), the ALU performs a subtraction, and the branch is taken if SF is set. Similarly for a BEQ, the branch is taken if ZF is set, etc.
+	
+	The MSW also contains configuration flags, like the Interrupt Enable (IF) flag that enables or disables maskable interrupts (special signals that I/O hardware can use to get the CPU's attention – essentially this flag tells the CPU whether to entertain or ignore such requests).
+	
+	For correctness, MSW has to be stored during context save and restored during context restore.
 \end{definition}
 
 \begin{definition}{\textbf{File system}}
@@ -238,6 +259,24 @@ Memory to store data.
 	\includegraphics[scale=0.3]{m1/writingOS}
 	\centering
 \end{tcolorbox}
+
+\begin{example}{\textbf{Privilege Levels}  used in Intel CPUs}
+	
+	This diagram is useful to understand privilege rings:
+	
+	\begin{figure}[!h]
+		\includegraphics[scale=0.2]{m1/privilegeRing}
+		\centering
+	\end{figure}
+	
+	processes running in lower (outer) rings have more restrictive access to the machine than processes in the higher (inner) rings, to prevent a user, for example, from erasing the entire system drive.
+	
+	\begin{tcolorbox}
+		\textsf{why the highest priority task can still be interrupted by the lowest priority interrupt}, and how this affects ISR design. (Hint: Interrupts are implemented in hardware in the CPU itself).
+		
+		This is because task priorities are seen only by the OS. As far as the CPU is concern, it is “just another program” that is running, with instructions being fetched and executed. On the other hand interrupt lines are checked at the end of each instruction execution cycle, so interrupts are always serviced regardless of their priority level (and of the priority level of the running task).
+	\end{tcolorbox}
+\end{example}
 
 \begin{definition}{\textbf{Kernel}}
 	\begin{myitemize}
@@ -323,7 +362,22 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\end{myitemize}
 \end{example}
 
-
+\begin{example}{\textbf{UNIX signal}: SIGTERM or SIGKILL}
+	\begin{myitemize}
+		\item SIGTERM (triggered using \textsf{kill $<$process id$>$}):
+		\begin{myitemize}
+			\item The OS receives the SIGTERM request and passes it to the process.
+			\item The process receives this signal and can clean up and release resources it is using.
+			\item If the process has child processes, it will terminate the child processes also using a SIGTERM.
+			\item The process exits gracefully.
+		\end{myitemize}
+		\item SIGKILL (triggered using \textsf{kill $-$9 $<$process id$>$}):
+		\begin{myitemize}
+			\item Process is terminated immediately by init (the UNIX master process). SIGKILL is not passed to the process, and the process does not have any chance to do cleaning up.
+			\item SIGKILL can create zombie processes particularly if the killed process has children.
+		\end{myitemize}
+	\end{myitemize}
+\end{example}
 
 \section{Process Management}
 \begin{definition}{\textbf{Program}}
@@ -419,11 +473,23 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\centering
 \end{figure}
 
+\begin{tcolorbox}
+	\textsf{What other pieces of information does the OS need to save about a process?}
+	
+	\begin{myitemize}
+		\item \textbf{File handles / Open File Table}: These are data structures that maintain information about files that are opened by the process, like the location that a process is inside the file, access rights to the file, file open modes, etc.
+		\item \textbf{Pending signals}: A “signal” is an OS message to the process.
+		\item \textbf{Process Running State}: Whether the process is suspending, ready, running, terminated, etc.
+		\item \textbf{Accounting Information}: How much CPU time the process has used, how much disk space, network activity, etc.
+		\item \textbf{Process ID}: Unique number identifying the process. Etc.
+	\end{myitemize}
+\end{tcolorbox}
+
 \begin{example}{\textbf{Context Switching in FreeRTOS Atmega Port}}
 	FreeRTOS relies on regular interrupts from Timer 0 to switch between tasks. When the interrupt triggers:
 	\begin{myenumerate}
 		\item PC is placed onto Task A’s stack.
-		\item The ISR calls \textsf{portSAVECONTEXT}, resulting in Task A’s context being pushed onto the stack. 
+		\item The ISR calls \textsf{portSAVECONTEXT}, resulting in Task A’s context being pushed onto the stack.
 		\item \textsf{pxCurrentTCB} will also hold SPH/SPL after the context save.
 		\begin{myitemize}
 			\item This must be saved by the kernel.
@@ -456,7 +522,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\centering
 \end{tcolorbox}
 
-\begin{definition}{\textbf{Creating a new process - fork()}}
+\begin{definition}{\textbf{Creating a new process - \textsf{fork()}}}
 	\begin{myitemize}
 		\item Fork system call creates a new process by duplicating the current image into a new process, \textit{child process}
 		\item \textsf{same code} (executable image) is executed
@@ -475,6 +541,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\item Independent copy of: memory, arguments, environment variables (note: cloning example)
 		\end{myitemize}
 		\item fork return result is -1 if the fork failed.
+		\item \textsf{for(int i=0; i$<$10; i++) fork();}, this for general case n, there are $2^n$ processes created including the original process. 
 	\end{myitemize}
 \end{definition}
 
@@ -564,8 +631,8 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \begin{definition}{\textbf{Types of Multitaskers}}
 	\begin{myitemize}
 		\item Batch Processing (Not actually multitasking since only one process runs at a time to completion.)
-		\item Co-operative Multitasking (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time.)
-		\item Pre-emptive Multitasking (Currently running processes can be forcefully suspended by the scheduler.)
+		\item Co-operative Multitasking (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time. Context switching is controlled entirely by processes themselves. Co-operative multitasking is simpler and less prone to concurrency issues, but should any process go into an infinite loop, it could potentially freeze up the system.)
+		\item Pre-emptive Multitasking (Currently running processes can be forcefully suspended by the scheduler. \textsf{Timer-triggered} multitasking.)
 		\item Real-Time Multitasking (Processes have fixed deadlines that must be met.)
 		\begin{myitemize}
 			\item Hard Real Time Systems: Disaster strikes! System fails, possibly catastrophically!
