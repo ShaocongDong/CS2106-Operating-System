@@ -110,8 +110,8 @@
 	is a suite (i.e. a collection) of specialised software that:
 	\begin{myitemize}
 		\item Gives you access to the hardware devices like disk drives, printers, keyboards and monitors.
-		\item Controls and allocate system resources like memory and processor time.
-		\item Gives you the tools to customise your and tune your system.
+		\item Controls and allocates system resources like memory and processor time.
+		\item Gives you the tools to customise and tune your system.
 	\end{myitemize}
 \end{definition}
 \begin{example}
@@ -682,6 +682,9 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\begin{myitemize}
 				\item Each process is given a fixed time slot $c_i$.
 				\item After time $c_i$, scheduler is invoked and next task is selected on a round-robin basis.
+				\item Any process that has finished its run is blocked until the next time it is due to run again.
+				\item The process can be preempted in the middle of its run.
+				\item It simply cycles through the processes without caring about their deadlines, (unlike RMS and EDF which take into account deadlines), so we cannot guarantee that processes meet their deadlines in general.
 			\end{myitemize}
 			\item Shortest Remaining Time (\textsf{SRT})
 			\begin{myitemize}
@@ -695,6 +698,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\begin{myitemize}
 				\item Processes are prioritized according to $P_i$, Shortest period = highest priority.
 				\item \textbf{Critical Instance Analysis} is used to test that all processes meet their deadlines
+				\item We can also write down the table to see and the pattern will repeat for every $LCM(P_1, P_2, \dots, P_n))$.
 			\end{myitemize}
 			\item Earliest Deadline First Scheduling (\textsf{EDF})
 			\begin{myitemize}
@@ -721,11 +725,23 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\begin{myenumerate}
 		\item Sort T by period of each task, if T is not already sorted. (We will assume that $T_1$ has the shortest period, $T_2$ has the $2^{nd}$ shortest, etc.)
 		\item For each task $T_i \in T$, recursively compute $S_{i0}, S_{i1}, \dots$ where:
-		\[ S_{i,0}=\sum^i_{j=1}C_j; S_{i,(x+1)}=C_i+\sum^{i-1}_{j=1}C_j\times \ceil{\frac{S_{i,x}}{P_j}}  \]
+		\[ S_{i,0}=\sum^i_{j=1}C_j; S_{i,(x+1)}=C_i+\sum^{i-1}_{j=1}C_j\times \ceil{\frac{S_{i,x}}{P_j}} =\text{CPU time}+\text{ALL possible preemptions} \]
 		\item Stop when $S_{i,(x+1)}=S_{i,x}$. Call this $S_{i,(x+1)}$ the final value $S_{i,F}$ (termination value).
 		\item If $S_{i,F}<D_i (=T_i+P_i)$, then the task i is schedulable and will not miss its deadlines.
 	\end{myenumerate}
 \end{method}
+\begin{remark}{\textbf{Comparison between RMS and fixed priority policy on critical instance analysis}}
+
+	In \textbf{critical instance analysis}, the only things that are important are:
+	\begin{myenumerate}
+		\item The priority remains fixed in some way throughout the execution life of the processes. In RMS the priority remains fixed because we assume that $P_i$ is fixed. Here the priority is fixed by definition.
+		\item The period $P_i$ of each process is fixed so that each process is pre-empted by a higher priority processed in predictable ways.
+	\end{myenumerate}
+	
+	If these two conditions are met, then it doesn’t matter whether we are using a fixed priority policy or an RMS policy; If $S_{i, F} < D_i$ for all i, it means that for every process, the worst case execution time including all possible preemptions is still less than the deadline for each process, and thus all processes are guaranteed to meet their deadlines.
+	
+	This is important because it means that CIA can also be used for fixed priority systems as long as the two conditions hold.
+\end{remark}
 
 \begin{method}{\textbf{Managing Multiple Policies}}
 	Multiple policies can be implemented on the same machine using multiple queues:
@@ -809,6 +825,28 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\end{myitemize}
 \end{definition}
 
+\begin{example}{\textbf{Race condition for two threads}}
+	
+	There maybe four possible cases for tow threads running concurrently:
+	\begin{myitemize}
+		\item Thread 1 runs to completion, $x=6$, Thread 2 runs to completion, $x = 12$.
+		\item Thread 2 runs to completion, $x = 10$, Thread 1 runs to completion, $x = 11$.
+		\item Thread 1 loads x and is pre-empted, Thread 2 loads x and writes back $5 \times 2 = 10$, Thread 1 increments x to 6 and writes it back.
+		\item Thread  2 loads x and is pre-empted, Thread 1 loads x, updates it to 6, writes back, Thread 2 gets $5 \times 2 = 10$
+	\end{myitemize}
+\end{example}
+
+\begin{definition}{\textbf{Correctness in multithreaded programs}}
+	depends on the intended sequence of execution.
+\end{definition}
+
+\begin{tcolorbox}
+
+\textsf{why we have wrong value?}
+	
+	It is either because the threads are executed in the wrong sequence, or because one thread gets pre-empted before it can save its results and the next thread gets a stale value. The first thread then overwrites the next thread’s results.
+\end{tcolorbox}
+
 \begin{definition}{\textbf{Critical Sections} mutual exclusion - \textsf{mutex}}
 	
 	a RUNNING process is always in one of two possible ''states'':
@@ -830,6 +868,36 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item No process should wait forever to enter its critical section.
 	\end{myenumerate}
 \end{theorem}
+
+\begin{tcolorbox}
+	\textsf{Can local variables created in C be affected by race condition?}
+	
+	Local variables are created on the process’s stack when a function is called. They’re popped off and lost when the function exits. They can never cause race conditions because only the thread or process calling that function can access to the variables.  Since no other process or thread has access, race conditions are not possible.
+
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{What can cause Co-operative multitaskers produce incorrect results?}
+	
+	\begin{myitemize}
+		\item The sequence of process execution might be wrong. The scheduler might choose to run process A before B, when A depends on a result in B.
+		\item -	A process may inadvertently give up control of the CPU before completing calculations, causing a dependent process to run and get the wrong results. An example of this is when a process decides to call \textsf{printf}, which will trigger an OS call that might trigger a context switch without the programmer’s knowledge.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{How mutual exclusion guarantees that the two processes produce only correct values of n?}
+	
+	Mutex guarantees that each process reads, updates and writes n before the other process runs. (Race condition for two not atomic operations)
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Atomicity}}
+	means that the steps taken in an instruction, or the steps taken in a group of instructions, are executed as one complete unit without possibility of interruption.
+	\begin{myitemize}
+		\item Single-processor operating systems may disable interrupts to guarantee atomicity because task/process/thread switching does not happen without interrupts.
+		\item User programs may not be as thoroughly tested, and allowing user programs to disable interrupts could lead to the entire system being crippled, as no further task switches would be possible.
+	\end{myitemize}
+\end{definition}
 
 \begin{example}{\textbf{Mutual Exclusion Implementation}}
 	\begin{myitemize}
@@ -929,6 +997,19 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 					\end{myitemize}
 				\end{myitemize}
 			\end{tcolorbox}
+		\end{myitemize}
+		\item Make \textbf{Peterson's solution} work
+		\begin{figure}[!h]
+			\includegraphics[scale=0.45]{m1/peterson1}
+			\includegraphics[scale=0.45]{m1/peterson2}
+		\end{figure}
+		\begin{myitemize}
+			\item For Peterson's solution, it differs from the lock variable implementation in that there are two different lock variables, one for each process
+			\begin{myitemize}
+				\item Each processes only WRITES to the lock variable, which is an atomic operation. The main weakness of the Lock Variable solution is that it involved read-update-write operations on a single shared variable, which does not happen in this case.
+				\item Before entering the critical section, both processes check to see whether THE OTHER process intends to enter. If so it waits.
+				\item Setting interested to TRUE takes place BEFORE this check, so in the worst case, both set interested to true at the same time, leading to deadlock. \textbf{Rescue}: by using \textsf{turn}, which can be either 0 or 1, we prevent both process stuck and busy waiting, one of them will execute the critical section and then leave and make \textsf{interested = FALSE}.
+			\end{myitemize}
 		\end{myitemize}
 	\end{myitemize}
 \end{example}
