@@ -344,25 +344,25 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \end{tcolorbox}
 
 \begin{example}{\textbf{LINUX system call}}
-	\begin{myitemize}
+	\begin{myenumerate}
 		\item User mode: (outside kernel)
-		\begin{myitemize}
+		\begin{myenumerate}
 			\item C function wrapper (eg. \textbf{getpid()}) for every system call in C library.
 			\item assembler code to setup the system call no, arguments
 			\item trap to kernel	
-		\end{myitemize}
+		\end{myenumerate}
 		\item Kernel mode: (inside kernel)
-		\begin{myitemize}
+		\begin{myenumerate}
 			\item dispatch to correct routine
 			\item check arguments for errors (eg. invalid argument, invalid address, security violation)
 			\item do requested service
 			\item return from kernel trap to user mode
-		\end{myitemize}
+		\end{myenumerate}
 		\item User mode: (Outside kernel)
-		\begin{myitemize}
+		\begin{myenumerate}
 			\item returns to C wrapper - check for error return values
-		\end{myitemize}
-	\end{myitemize}
+		\end{myenumerate}
+	\end{myenumerate}
 \end{example}
 
 \begin{example}{\textbf{UNIX signal}: SIGTERM or SIGKILL}
@@ -392,7 +392,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \end{definition}
 
 \begin{tcolorbox}
-	\textsf{Program vs. Process}
+	\textsf{Program} vs. \textsf{Process}
 	
 	A single program can produce multiple processes. (e.g. chrome.exe is a single program, but every tab in Chrome is a new process!)
 
@@ -407,7 +407,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \end{definition}
 
 \begin{remark}
-	we mostly assume number of processes $\geq$ number of CPU otherwise can have idle tasks. So each core must still switch between processes even for multi-cores, and we will assume a single processor with a single core.
+	we mostly assume number of processes $\geq$ number of CPU otherwise can have idle CPU core. So each core must still switch between processes even for multi-cores, and we will assume a single processor with a single core.
 \end{remark}
 
 \begin{tcolorbox}
@@ -491,7 +491,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \begin{example}{\textbf{Context Switching in FreeRTOS Atmega Port}}
 	FreeRTOS relies on regular interrupts from Timer 0 to switch between tasks. When the interrupt triggers:
 	\begin{myenumerate}
-		\item PC is placed onto Task A’s stack.
+		\item PC is placed onto Task A's stack.
 		\item The ISR calls \textsf{portSAVECONTEXT}, resulting in Task A’s context being pushed onto the stack.
 		\item \textsf{pxCurrentTCB} will also hold SPH/SPL after the context save.
 		\begin{myitemize}
@@ -500,7 +500,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\end{myitemize}
 		\item The kernel then selects Task B to run, and copies its SPH/SPL values into \textsf{pxCurrentTCB} and calls \textsf{portRESTORE\_CONTEXT}.
 		\item The rest of \textsf{portRESTORE\_CONTEXT} is executed, causing Task B’s data to be loaded into R31-R0 and SREG. Now Task B can resume like as though nothing happened
-		\item Only Task B’s PC remains on the stack. Now the ISR exits, causing this value to be popped off onto the AVR’s PC.
+		\item Only Task B's PC remains on the stack. Now the ISR exits, causing this value to be popped off onto the AVR's PC.
 		\begin{myitemize}
 			\item PC points to the next instruction to be executed. 
 			\item End result: Task B resumes execution, with all its data and SREG intact!
@@ -633,13 +633,13 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 \begin{definition}{\textbf{Types of Multitaskers}}
 	\begin{myitemize}
-		\item Batch Processing (Not actually multitasking since only one process runs at a time to completion.)
-		\item Co-operative Multitasking (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time. Context switching is controlled entirely by processes themselves. Co-operative multitasking is simpler and less prone to concurrency issues, but should any process go into an infinite loop, it could potentially freeze up the system.)
-		\item Pre-emptive Multitasking (Currently running processes can be forcefully suspended by the scheduler. \textsf{Timer-triggered} multitasking.)
-		\item Real-Time Multitasking (Processes have fixed deadlines that must be met.)
+		\item \textbf{Batch Processing} (Not actually multitasking since only one process runs at a time to completion.)
+		\item \textbf{Co-operative Multitasking} (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time. Context switching is controlled entirely by processes themselves. Co-operative multitasking is simpler and less prone to concurrency issues, but should any process go into an infinite loop, it could potentially freeze up the system.)
+		\item \textbf{Pre-emptive Multitasking} (Currently running processes can be forcefully suspended by the scheduler. \textsf{Timer-triggered} multitasking.)
+		\item \textbf{Real-Time Multitasking} (Processes have fixed deadlines that must be met.)
 		\begin{myitemize}
-			\item Hard Real Time Systems: Disaster strikes! System fails, possibly catastrophically!
-			\item Soft Real Time Systems: Mostly just an inconvenience. Performance of system is degraded
+			\item \textbf{Hard} Real Time Systems: Disaster strikes! System fails, possibly catastrophically!
+			\item \textbf{Soft} Real Time Systems: Mostly just an inconvenience. Performance of system is degraded
 		\end{myitemize}
 	\end{myitemize}
 \end{definition}
@@ -701,7 +701,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\begin{myitemize}
 				\item Processes are prioritized according to $P_i$, Shortest period = highest priority.
 				\item \textbf{Critical Instance Analysis} is used to test that all processes meet their deadlines
-				\item We can also write down the table to see and the pattern will repeat for every $LCM(P_1, P_2, \dots, P_n))$.
+				\item We can also write down the table to see and the pattern will repeat for every $LCM ( P_1, \dots, P_n )$.
 			\end{myitemize}
 			\item Earliest Deadline First Scheduling (\textsf{EDF})
 			\begin{myitemize}
@@ -791,7 +791,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\item When a process becomes blocked its priority is often upgraded (see later). 
 			\end{myitemize}
 		\end{tcolorbox}
-		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 – 800 ms, Priority level 139 – 5 ms, System load
+		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 - 800 ms, Priority level 139 - 5 ms, System load
 		\item How process priorities are calculated: Priority = base + f(nice) + g(cpu usage estimate)
 		\begin{myitemize}
 			\item $f(.) =$ priority adjustment from nice value.
@@ -876,7 +876,6 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\textsf{Can local variables created in C be affected by race condition?}
 	
 	Local variables are created on the process’s stack when a function is called. They’re popped off and lost when the function exits. They can never cause race conditions because only the thread or process calling that function can access to the variables.  Since no other process or thread has access, race conditions are not possible.
-
 \end{tcolorbox}
 
 \begin{tcolorbox}
@@ -884,8 +883,9 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	
 	\begin{myitemize}
 		\item The sequence of process execution might be wrong. The scheduler might choose to run process A before B, when A depends on a result in B.
-		\item -	A process may inadvertently give up control of the CPU before completing calculations, causing a dependent process to run and get the wrong results. An example of this is when a process decides to call \textsf{printf}, which will trigger an OS call that might trigger a context switch without the programmer’s knowledge.
+		\item A process may inadvertently give up control of the CPU before completing calculations, causing a dependent process to run and get the wrong results. An example of this is when a process decides to call \textsf{printf}, which will trigger an OS call that might trigger a context switch without the programmer’s knowledge.
 	\end{myitemize}
+
 \end{tcolorbox}
 
 \begin{tcolorbox}
@@ -925,6 +925,18 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\item CPU unlocks the address and data buses.
 				\item ALTERNATIVE: the XCHG instruction, used on Intel machines. Swaps contents of ''lock'' and ''reg'' instead of just writing ''1'' to lock.
 			\end{myitemize}
+			\item \textbf{Peterson's solution}
+			\begin{figure}[!h]
+				\includegraphics[scale=0.45]{m1/peterson1}
+				\includegraphics[scale=0.45]{m1/peterson2}
+			\end{figure}
+			\begin{myitemize}
+				\item It differs from the \textbf{single lock variable} implementation in that there are two different lock variables, one for each process
+				\item Each processes only WRITES to the lock variable, which is an atomic operation. The main weakness of the Lock Variable solution is that it involved read-update-write operations on a single shared variable, which does not happen in this case.
+				\item Before entering the critical section, both processes check to see whether THE OTHER process intends to enter. If so it waits.
+				\item Setting interested to TRUE takes place BEFORE this check, so in the worst case, both set interested to true at the same time, leading to deadlock. 
+			\end{myitemize}
+
 		\end{myitemize}
 		\begin{tcolorbox}
 			\textsf{Busy-wait approaches like Peterson and TSL/XCHG have a problem called \textbf{deadlock}.} Consider two processes H and L, and a scheduler rule that says that H is always run when it is READY. Suppose L is currently in the critical region.
@@ -934,6 +946,8 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\item H loops forever, and CPU control never gets handed to L.
 				\item As a result L never releases the lock.
 			\end{myenumerate}
+			
+			\textbf{**Rescue for Peterson}: by using \textsf{turn}, which can be either 0 or 1, we prevent both process stuck and busy waiting, one of them will execute the critical section and then leave and make \textsf{interested = FALSE}. (as shown in the above code)
 		\end{tcolorbox}
 		\item \textbf{Sleep/Wake}
 		\begin{myitemize}
@@ -948,7 +962,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\item Producer adds an item, increments count to ''1'', then sends  a WAKE to the consumer. (Since consumer is not technically sleeping yet, the WAKE is lost.)
 				\item Consumer starts up, and since count is 0, goes to SLEEP.
 				\item Producer starts up, fills buffer until it is full and SLEEPs.
-				\item Since consumer is also SLEEPing, no one wakes the producer. Deadlock.
+				\item Since consumer is also SLEEPing, no one wakes the producer. \textbf{Deadlock!}
 			\end{myenumerate}
 		\end{myitemize}
 		\item \textbf{Semaphores}, a special lock variable that counts the number of wake-ups saved for future use.
@@ -963,7 +977,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\item non\_critical\_section() $\rightarrow$ DOWN(sema) $\rightarrow$ critical\_section() $\rightarrow$ UP(sema)
 			\item We can also implement mutexes with \textsf{TSL} or \textsf{XCHG}. 0 = Unlocked, 1 = Locked
 			\begin{figure}[!h]
-				\includegraphics[scale=0.4]{m1/mutexWithTSL}
+				\includegraphics[scale=0.35]{m1/mutexWithTSL}
 				\centering
 			\end{figure}
 			\begin{tcolorbox}
@@ -983,14 +997,14 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\begin{tcolorbox}
 				\textsf{Reusable/Consumable Resources}
 				\begin{myitemize}
-					\item Reusable Resources - usually causes deadlocks
+					\item \textbf{Reusable} Resources - usually causes deadlocks
 					\begin{myitemize}
 						\item Examples: memory, devices, files, tables 
 						\item Number of units is \textbf{constant}
 						\item Unit is either free or allocated; \textbf{no sharing} (no simultaneous using) 
 						\item Process \textbf{requests, acquires, releases units}
 					\end{myitemize}
-					\item Consumable Resources
+					\item \textbf{Consumable} Resources
 					\begin{myitemize}
 						\item Examples: messages, signals
 						\item Number of units \textbf{varies} at runtime 
@@ -1001,29 +1015,16 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\end{myitemize}
 			\end{tcolorbox}
 		\end{myitemize}
-		\item Make \textbf{Peterson's solution} work
-		\begin{figure}[!h]
-			\includegraphics[scale=0.45]{m1/peterson1}
-			\includegraphics[scale=0.45]{m1/peterson2}
-		\end{figure}
-		\begin{myitemize}
-			\item For Peterson's solution, it differs from the lock variable implementation in that there are two different lock variables, one for each process
-			\begin{myitemize}
-				\item Each processes only WRITES to the lock variable, which is an atomic operation. The main weakness of the Lock Variable solution is that it involved read-update-write operations on a single shared variable, which does not happen in this case.
-				\item Before entering the critical section, both processes check to see whether THE OTHER process intends to enter. If so it waits.
-				\item Setting interested to TRUE takes place BEFORE this check, so in the worst case, both set interested to true at the same time, leading to deadlock. \textbf{Rescue}: by using \textsf{turn}, which can be either 0 or 1, we prevent both process stuck and busy waiting, one of them will execute the critical section and then leave and make \textsf{interested = FALSE}.
-			\end{myitemize}
-		\end{myitemize}
 	\end{myitemize}
 \end{example}
 
-\begin{theorem}{\textbf{Dealing with deadlocks}}
+\begin{method}{\textbf{Dealing with deadlocks}}
 	\begin{myenumerate}
 		\item \textbf{Detection and Recovery}: Allow deadlock to happen and eliminate it
 		\item \textbf{Avoidance (dynamic)}: Runtime checks disallow allocations that might lead to deadlocks
 		\item \textbf{Prevention (static)}: Restrict type of request and acquisition to make deadlock impossible
 	\end{myenumerate}
-\end{theorem}
+\end{method}
 
 \begin{theorem}{\textbf{Conditions for Deadlock}}
 	\begin{myenumerate}
@@ -1032,6 +1033,10 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item Circular wait: \textbf{At least 2} processes must be blocked on each other
 	\end{myenumerate}
 \end{theorem}
+
+\begin{definition}{\textbf{Spooling}}
+	is a specialised form of multi-programming for the purpose of \textbf{copying data between different devices}. In contemporary systems it is usually used for mediating between a computer \textbf{application} and a slow \textbf{peripheral}, such as a printer. Spooling allows programs to ''hand off'' work to be done by the peripheral and then proceed to other tasks, or do not begin until input has been transcribed. A dedicated program, the \textbf{spooler}, maintains an orderly sequence of jobs for the peripheral and feeds it data at its own rate. Conversely, for slow input peripherals, such as a card reader, a spooler can maintain a sequence of computational jobs waiting for data, starting each job when all of the relevant input is available; see \textbf{batch processing}. The \textbf{spool} itself refers to the sequence of jobs, or the storage area where they are held. In many cases the spooler is able to drive devices at their full rated speed with minimal impact on other processing. \textbf{Spooling} is a combination of \textbf{buffering} and \textbf{queueing}.
+\end{definition}
 
 \begin{method}{\textbf{Deadlock Prevention}}
 	\begin{myenumerate}
@@ -1082,14 +1087,15 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \end{definition}
 
 \begin{tcolorbox}
-	\includegraphics[scale=0.4]{m1/producerConsumerMonitor1}
-	\includegraphics[scale=0.4]{m1/producerConsumerMonitor2}
-	\centering	
+	\begin{center}
+		\includegraphics[scale=0.4]{m1/producerConsumerMonitor1}
+		\includegraphics[scale=0.4]{m1/producerConsumerMonitor2}
+	\end{center}
 	
 	Similar to Sleep/Wake, however, the mutual exclusion from the monitor prevents the SIGNAL from being lost! 
 \end{tcolorbox}
 
-	\textsf{Monitors and Condition Variables Problems} - Violation of mutual exclusion
+	\textsf{$\circledast$ Monitors and Condition Variables Problems} - Violation of mutual exclusion
 	\begin{myitemize}
 		\item When a process encounters a WAIT, it is blocked and another process is allowed to enter the monitor.
 		\item When there’s a SIGNAL, the sleeping process is woken up.
@@ -1100,7 +1106,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\end{myitemize}
 	\end{myitemize}
 
-	\textsf{Ways to resolve}
+	\textsf{$\circledast$ Ways to resolve}
 	\begin{myitemize}
 		\item We require that the signaler exits immediately after calling SIGNAL.
 		\item We suspend the signaler immediately and resume the signaled process.
@@ -1109,16 +1115,17 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	
 \begin{remark}{\textbf{Comparison between semaphore and condition variable}}
 
-
-	\noindent \textsf{Semaphore}
 	\begin{myitemize}
+		\item \textsf{Semaphore}
+		\begin{myitemize}
 		\item If Process A UPs a semaphore with no pending DOWN, the UP is saved.
 		\item The next DOWN operation will not block because it will match immediately with a preceding UP.
-	\end{myitemize}
-	\textsf{Condition variable}
-	\begin{myitemize}
+		\end{myitemize}
+		\item \textsf{Condition variable}
+		\begin{myitemize}
 		\item If Process A SIGNALs a condition variable with no pending WAIT, the SIGNAL is simply lost.
 		\item This is similar to the SLEEP/WAKE problem earlier on.
+		\end{myitemize}
 	\end{myitemize}
 \end{remark}
 
