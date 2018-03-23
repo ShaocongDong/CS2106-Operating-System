@@ -125,12 +125,12 @@
 	\textsf{What are Operating System?} It usually consists of several parts. (\textsf{Onion Model})
 	
 	\begin{myitemize}
-		\item Bootloader – First program run by the system on start-up. Loads remainder of the OS kernel. 
+		\item \textbf{Bootloader} – First program run by the system on start-up. Loads remainder of the OS kernel. 
 		\begin{myitemize}
 			\item On Wintel systems this is found in the Master Boot Record (MBR) on the hard disk.
 		\end{myitemize}
-		\item Kernel – The part of the OS that runs almost continuously. 
-		\item System Programs – Programs provided by the OS to allow:
+		\item \textbf{Kernel} – The part of the OS that runs almost continuously. 
+		\item \textbf{System Programs} – Programs provided by the OS to allow:
 		\begin{myitemize}
 		\item Access to programs.
 		\item Configuration of the OS.
@@ -156,6 +156,10 @@
 		\centering
 \end{tcolorbox}
 
+\begin{remark}
+	System calls are provided by OS, and libraries calls are provided individual languages. Some library calls wrap around one or more system calls to provide the functionality to user program.
+\end{remark}
+
 \begin{definition}{\textbf{Boostrapping}}
 	\begin{myitemize}
 	\item The \textbf{OS is not present in memory} when a system is “cold started”.
@@ -168,6 +172,7 @@
 	\item The first sector is generally called the “boot sector” or “master boot record” for this reason.
 	\item Job is to load up the main part of the operating system and start it up.
 	\end{myitemize}
+	\item bootstrap routine in boot sector loads up core disk services, and use this to load up memory and process management routines, and use that to load up services like web servers, ssh servers, etc, and finally load up the shell.
 \end{myitemize}
 \end{definition}
 
@@ -221,6 +226,13 @@
 	\includegraphics[scale=0.4]{m1/hardwareController}
 	\centering
 \end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between device drivers}}
+	\begin{myitemize}
+		\item \textbf{Block-oriented device management}: the \textbf{block devices} are usually storage devices that provide reading and writing operation of data in fixed-size blocks. Some \textbf{examples} of such devices are: hard drives, floppy disks, and optical drives such as DVD-ROM, and CD-ROM. \textbf{Advantage}: fewer pins to access data.
+		\item \textbf{Stream-oriented device management}: \textbf{character (Stream) devices} are allowed to use \textbf{few bytes} in its operations. Also buffering is not required for such devices, and as such; the response time and the processing speed is faster than the block devices. \textbf{examples}: console, mouse, and all devices that are neither storage nor network devices. \textbf{Advantage}: I/O can be done directly between the device and the user and as such; the kernel is saved from copying operation and the overhead of buffering mechanisms.
+	\end{myitemize}
+\end{remark}
 
 \begin{definition}{\textbf{Memory}}
 	static/dynamic (\textsf{new, delete, malloc, free}). Memory to store instructions
@@ -319,7 +331,7 @@ Memory to store data.
 \end{tcolorbox}
 
 \begin{definition}{\textbf{System Calls}}
-	calls made to the “Application Program Interface” or API of the OS.
+	are calls made to the “Application Program Interface” or API of the OS.
 	\begin{myitemize}
 		\item UNIX  and similar OS mostly follow the POSIX standard. (Based on C. Programs become more portable.) \textit{POSIX: portable operating system interface for UNIX, minimal set of system calls for application portability between variants of UNIX}.
 		\item Windows follows the WinAPI standard. (Windows 7 and earlier provide Win32/Win64, based on C.
@@ -342,6 +354,13 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item software interrupt - instruction which raises specific interrupt from software.
 	\end{myitemize}
 \end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between User Thread and Kernel Thread}}
+	\begin{myitemize}
+		\item \textbf{User threads} are implemented by users. OS doesn’t recognised user level threads. Context switch time is less. Context switch requires no hardware support. If one user level thread perform blocking operation then entire process will be blocked. (e.g., Java thread, POSIX threads.)
+		\item \textbf{kernel threads} are implemented and recognised by OS. Implementation of Kernel thread is complicated. Context switch time is more and hardware support is needed. If one kernel thread perform blocking operation then another thread can continue execution. it is the \textbf{number of kernel threads} that determine the CPU received. (visible and schedulable by the OS, e.g., events/n, pdflush)
+	\end{myitemize}
+\end{remark}
 
 \begin{example}{\textbf{LINUX system call}}
 	\begin{myenumerate}
@@ -397,6 +416,17 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	A single program can produce multiple processes. (e.g. chrome.exe is a single program, but every tab in Chrome is a new process!)
 
 \end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between foreground process and background process}}
+	\begin{myitemize}
+		\item \textbf{Foreground Process}: any command or task you run directly and wait for it to complete. Some foreground processes show some type of user interface that supports ongoing user interaction, whereas others execute a task and ''freeze'' the computer while it completes that task.
+		
+		\textbf{Shell command}: \textsf{\$ command1}
+		\item \textbf{Background Process}: the shell does not have to wait for a background process to end before it can run more processes. Within the limit of the amount of memory available, you can enter many background commands one after another. Background jobs are run at a lower priority to the foreground jobs. You will see a message on the screen when a background process is finished running.
+		
+		\textbf{Shell command}: \textsf{\$ command1 \&}
+	\end{myitemize}
+\end{remark}
 
 \begin{definition}{\textbf{Execution Modes}}
 	\begin{myitemize}
@@ -530,7 +560,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item Fork system call creates a new process by duplicating the current image into a new process, \textit{child process}
 		\item \textsf{same code} (executable image) is executed
 		\item Child differs only in process id (PID) and parent (PPID), fork return value
-		\item Data in child is a COPY of the parent (i.e. not shared)
+		\item Data in child is a COPY of the parent (i.e. not shared) $\rightarrow$ unique only to fork
 		\item In PARENT process after fork:
 		\begin{myitemize}
 			\item PC is at return from fork system call
@@ -545,7 +575,28 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\end{myitemize}
 		\item fork return result is -1 if the fork failed.
 		\item \textsf{for(int i=0; i$<$10; i++) fork();}, this for general case n, there are $2^n$ processes created including the original process. 
+		\begin{figure}[!h]
+			\includegraphics[scale=0.3]{m1/forkBomb}
+			\centering
+		\end{figure}
+		\item \textbf{Fork bomb}: is a denial-of-service attack wherein a process \textbf{continually replicates} itself to deplete available system resources, slowing down or crashing the system due to resource starvation.
 	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Waiting for child process - \textsf{pid\_t wait(int *stat\_loc)}}}
+	\begin{myitemize}
+		\item If any process has more than one child processes, then after calling \textsf{wait()}, parent process has to be in wait state if no child terminates.
+		\item If only one child process is terminated, then \textsf{wait()} returns process ID of the terminated child process.
+		\item If more than one child processes are terminated than \textsf{wait()} reap any \textbf{arbitrarily} child and return a process ID of that child process.
+		\item When \textsf{wait()} returns they also define \textbf{exit status} (which tells our, a process why terminated) via pointer, If status are not \textbf{NULL}.
+		\item If any process has no child process then \textsf{wait()} returns immediately ''-1''.
+		\item Calling \textsf{while(wait(NULL)$>$0);} means wait until all child processes exit (or change state) and no more child processes are unwaited-for (or until an error occurs)
+		\item Calling \textsf{wait(NULL)} will block parent process until any of its children has finished. If child terminates before parent process reaches \textsf{wait(NULL)} then the child process turns to a \textbf{zombie} process until its parent waits on it and its released from memory.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{replaces the current process image with a new process image - \textsf{execl()}}}
+	
 \end{definition}
 
 \begin{definition}{\textbf{The Master Process}}
@@ -556,6 +607,18 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item \textsf{init} watches for processes and response where needed, e.g. terminal login.
 		\item \textsf{init} also manages system run levels (e.g. shutdown, power failure, single-user mode), etc. Example of a system-like process running in kernel mode.
 	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{The Zombie Process}}
+	or \textbf{defunct process} is a process that has completed execution (via the \textsf{exit} system call) but still has an entry in the process table: it is a process in the \textbf{Terminated state}. This occurs for child processes, where the entry is still needed to allow the parent process to read its child's \textsf{exit} status: once the \textsf{exit} status is read via the wait system call, the zombie's entry is removed from the process table and it is said to be \textbf{''reaped''}. 
+	
+	A child process always first becomes a zombie before being removed from the resource table. In most cases, under normal system operation zombies are immediately waited on by their parent and then reaped by the system – processes that stay zombies for a long time are generally an error and cause a resource leak.
+	
+	Zombie process retains PID and stores termination status and result at its PCB table.
+\end{definition}
+
+\begin{definition}{\textbf{The Orphan Process}}
+	is a computer process whose parent process has finished or terminated, though it remains running itself. (this means it's still in \textbf{Running state})
 \end{definition}
 
 \begin{definition}{\textbf{Start/Stop a Process}}
@@ -580,13 +643,13 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 \begin{definition}{\textbf{Normal Program Termination} - \textsf{void exit(int status)} from standard C library function}
 	\begin{myitemize}
-		\item Usuall don't use \textsf{\_exit()} but \textsf{exit()}, which cleans up: open streams from C stdio library (e.g., fopen, printf) are flushed and closed
-		\item calls some exit handlers
+		\item Usually don't use \textsf{\_exit()} but \textsf{exit()}, which cleans up: open streams from C stdio library (e.g., \textsf{fopen}, \textsf{printf}) are flushed and closed
+		\item calls some \textsf{exit} handlers
 		\item finally calls \textsf{\_exit(status)} after all standard C cleanup done.
 	\end{myitemize}
 \end{definition}
 \begin{remark}
-	returning from \textsf{main()} implicitly calls exit. \textsf{exec} didn't actually call main directly but a startup routine. Open files also get flushed automatically.
+	returning from \textsf{main()} implicitly calls \textsf{exit}. \textsf{exec} didn't actually call main directly but a startup routine. Open files also get flushed automatically.
 \end{remark}
 
 \begin{tcolorbox}
@@ -644,8 +707,12 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\end{myitemize}
 \end{definition}
 \begin{remark}
-	Policies are determined by the kind of multitasking environment.
+	Policies are determined by the kind of multitasking environment. Shorter time-quantum for timer interrupts $\rightarrow$ More responsive, scheduler runs more often $\rightarrow$ net loss of user CPU time.
 \end{remark}
+
+\begin{definition}{\textbf{responsiveness}}
+	of a scheduling algorithm refers to how soon can a newly created task receives its first share of CPU time.
+\end{definition}
 
 \begin{method}{\textbf{Scheduling Policies} - enforce a priority ordering over processes}
 	\begin{myitemize}
@@ -746,11 +813,15 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	This is important because it means that CIA can also be used for fixed priority systems as long as the two conditions hold.
 \end{remark}
 
+\begin{remark}{\textbf{Check for starvation free}}
+	is to check if a job can always get in front of another process.
+\end{remark}
+
 \begin{method}{\textbf{Managing Multiple Policies}}
 	Multiple policies can be implemented on the same machine using multiple queues:
 	\begin{myitemize}
 		\item Each queue can have its own policy.
-		\item This scheme is used in Linux, as we will see shortly.
+		\item This scheme is used in Linux.
 	\end{myitemize}
 \end{method}
 
@@ -780,6 +851,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\item When its “time quantum” is expired, it is moved to the expired set. Next highest priority process is picked.
 			\item When active set is empty, active and expired pointers are swapped. Active set becomes expired set and vice versa.
 			\item Scheme ensures no starvation of lowest priority processes.
+			\item Without the expired set, only tasks in the highest priority queue will get to run: Tasks finish their time quanta have to be placed ''somewhere'' to be run again, and since there’s no expired set, that ''somewhere'' is to the back of the queue. When these tasks reach the front again they will be run, starving all the other queues.
 		\end{myitemize}
 		\begin{tcolorbox}
 			\textsf{What happens if a process becomes blocked? (e.g. on I/O)}
@@ -788,10 +860,10 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 				\item CPU time used so far is recorded. Process is moved to a queue of blocked processes.
 				\item When process becomes runnable again, it continues running until its time quantum is expired.
 				\item It is then moved to the expired set.
-				\item When a process becomes blocked its priority is often upgraded (see later). 
+				\item When a process becomes blocked its priority is often upgraded and given MORE CPU time to catch up.
 			\end{myitemize}
 		\end{tcolorbox}
-		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 - 800 ms, Priority level 139 - 5 ms, System load
+		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 - 800 ms, Priority level 139 - 5 ms, or System load.
 		\item How process priorities are calculated: Priority = base + f(nice) + g(cpu usage estimate)
 		\begin{myitemize}
 			\item $f(.) =$ priority adjustment from nice value.
@@ -904,7 +976,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 \begin{example}{\textbf{Mutual Exclusion Implementation}}
 	\begin{myitemize}
-		\item \textbf{Disabling Interrupts}
+		\item \textbf{Disabling Interrupts} (which is the only way to preempt a process)
 		\begin{myitemize}
 			\item disabling interrupts will prevent other processes from starting up and entering their critical sections.
 			\item Carelessly disabling interrupts can cause the entire system to grind to a halt.
@@ -917,6 +989,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\item Process B reads \textsf{lock} and sees it’s a 0. It doesn’t enter critical section and waits until \textsf{lock} is 1.
 			\item Process A finishes and sets \textsf{lock} to 1, allowing B to enter
 			\item PROBLEM: There’s a race condition on \textsf{lock}  itself.
+			\item NOTE: unlocking a mutex before it is locked can put it into an undefined state in POSIX systems.
 			\item \textbf{Test and Set Lock} (\textsf{TSL})
 			\begin{myitemize}
 				\item CPU locks the address and data buses, and reads ''lock'' from memory. The locked address and data buses will block accesses from all other CPUs. (''atomic''. This means that NOTHING can interrupt execution of this instruction. This is guaranteed in hardware.)
@@ -1233,6 +1306,14 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 
 \end{example}
 
+\begin{example}{\textbf{UNIX shared memory}}
+	\begin{myitemize}
+		\item Without an explicit delete command, the shared memory region stays around.
+		\item The shared memory region is identified by a number (id). A memory address is generated only when you attempt to attach to the identified region.
+		\item Permission bits can be set to allow other processes to use a particular shared memory region. If you use the most permissive setting, any process can access. (e.g. a permission bits of 0666).
+	\end{myitemize}
+\end{example}
+
 \newpage
 \section{Acronym \& Abbreviation Checklist}
 A:
@@ -1251,7 +1332,7 @@ G:
 
 H:
 
-I: \texttt{ISR}: Interrupt Service Routine; \texttt{IO}: Input Output;
+I: \texttt{ISR}: Interrupt Service Routine; \texttt{IO}: Input Output; \texttt{IPC}: Inter-process communication;
 
 J:
 
@@ -1265,7 +1346,7 @@ N:
 
 O: \texttt{OS}: operating system; 
 
-P: \texttt{PC}: Program Counter; \texttt{PID}: Process ID; \texttt{PPID}: Parent Process ID; 
+P: \texttt{PC}: Program Counter; \texttt{PID}: Process ID; \texttt{PPID}: Parent Process ID; \texttt{PCB}: Process Control Block;
 
 Q:
 
