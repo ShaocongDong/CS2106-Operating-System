@@ -143,18 +143,142 @@
 			\begin{myitemize}
 				\item Cannot be changed (even when extension changes)
 				\item Basic types: text, object, load file, directory
-				\item  
+				\item Application-specific types, e.g., .doc, .ps, .html
 			\end{myitemize}
+		\end{myitemize}
+		\item \textbf{Logical file organization}
+		\begin{myitemize}
+			\item Most common: byte stream
+			\item Fixed-size or variable-size records
+			\item Addressed: \textbf{Implicitly} (sequential access to next record), or \textbf{Explicitly} by position (record\#) or key
+			\begin{center}
+				\includegraphics[scale=0.4]{m2/fileOrgType}
+			\end{center}
 		\end{myitemize}
 	\end{myitemize}
 \end{definition}
 
+\begin{definition}{\textbf{Directory Management}}
+\begin{myitemize}
+	\item \textbf{Main issues}:
+	\begin{myitemize}
+		\item \textbf{Shape} of the data structure
+		\item \textbf{What} info to keep about files
+		\item \textbf{Where} to keep the files in directory
+		\item \textbf{How} to organise entries for efficiency?
+	\end{myitemize}
+	\item \textbf{File directory data structure}:
+	\begin{myitemize}
+		\item \textbf{Tree-structured}
+		\begin{myitemize}
+			\item \textbf{Simple} search, insert, delete operations
+			\item Sharing is \textbf{asymmetric}
+			\begin{center}
+				\includegraphics[scale=0.3]{m2/treeStructureFile}
+			\end{center}
+		\end{myitemize}
+		\item \textbf{DAG-structured}
+		\begin{myitemize}
+			\item \textbf{Symmetric} sharing
+			\item \textbf{Delete}: only last parent should remove files, so need \textbf{Reference count}
+			\begin{center}
+				\includegraphics[scale=0.3]{m2/DAGStructureFile}
+			\end{center}
+		\end{myitemize}
+		\item \textbf{DAG-structured with cycles}
+		\begin{myitemize}
+			\item Search is difficult with infinite loops
+			\item Deletion needs \textbf{garbage collection} (reference count not enough)
+		\end{myitemize}
+		\begin{center}
+			\includegraphics[scale=0.3]{m2/DAGwithCycleFile}
+		\end{center}
+		\item \textbf{Symbolic links (shortcuts)}
+		\begin{myitemize}
+			\item \textbf{Compromise} to allow sharing but avoid cycles.
+			\item For \textbf{read/write}: symbolic link is the same as actual link.
+			\item For \textbf{deletion}: only symbolic link is deleted.
+		\end{myitemize}
+		\begin{center}
+			\includegraphics[scale=0.3]{m2/symbolicStructureFile}
+		\end{center}
+	\end{myitemize}
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{UNIX Hard Links}}
+	\vspace{3mm}
+	
+	\hspace{-15mm}
+	\includegraphics[scale=0.35]{m2/unixHardLink1}
+	\includegraphics[scale=0.35]{m2/unixHardLink2}
+	
+\end{definition}
+
+\begin{definition}{\textbf{Symbolic Links}}
+	\vspace{3mm}
+	
+	\hspace{-15mm}
+	\includegraphics[scale=0.36]{m2/symbolicLink1}
+	\includegraphics[scale=0.36]{m2/symbolicLink2}
+	
+\end{definition}
+
+\begin{remark}{\textbf{Windows Shortcuts}}
+	\begin{myitemize}
+		\item Similar to symbolic links but does not re-expand further
+		\item Only understood by GUI shell! Created also from GUI shell
+		\item Win NTFS has hard links, symbolic links using junction mechanism (not normally used)
+	\end{myitemize}
+\end{remark}
+
+\begin{remark}{\textbf{File Directories - Path name}}
+	\begin{myitemize}
+		\item Concatenated local names with delimiter (. or / or $\backslash$ )
+		\item \textbf{Absolute} path name: start with root (/)
+		\item \textbf{Relative} path name: start with current directory (.)
+		\item Notation to move upward in hierarchy (..)
+	\end{myitemize}
+\end{remark}
+
+\begin{minipage}{0.45\linewidth}
+	\begin{method}{\textbf{Implementation of Directories}}
+		\begin{myitemize} 
+		\item \textbf{What information to keep in each entry}
+		\begin{myitemize}
+			\item \textbf{All} descriptive information, directory can become very large, searches are difficult / slow.
+			\item Only symbolic \textbf{name and pointer} to descriptor
+			\begin{myitemize}
+				\item Needs an extra disk access to descriptor
+				\item Variable name length
+			\end{myitemize}
+		\end{myitemize}
+		\item \textbf{How to organise entries within directory}
+		\begin{myitemize}
+			\item \textbf{Fixed-size} entries: use array of slots
+			\item \textbf{Variable-size} entries: use linked list
+			\item \textbf{Size of directory}: fixed or expanding
+		\end{myitemize}
+	\end{myitemize}
+	\end{method}
+	\end{minipage}\hspace{5mm}
+	\begin{minipage}{0.5\linewidth}
+		\includegraphics[width=0.8\linewidth ]{m2/implementDirectory}
+		\includegraphics[width=0.8\linewidth ]{m2/entryOrganization}
+	\end{minipage}
+	
+
+	
+
+
+	
+	
+	
+
+
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
 \newpage
-\begin{myitemize}
-	\item 
-\end{myitemize}
 
 {\color{red} red } \textsf{sftext} \texttt{tttext}
 \begin{tcolorbox} 
