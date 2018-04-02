@@ -38,7 +38,7 @@ void *serialSendThread(void *p)
 
 void *senderThreads(void *p)
 {
-	int threadNum = *((int *) p);
+	int threadNum = (int) p;
 	int count=0;
 	while(1)
 	{
@@ -62,7 +62,7 @@ int main()
 
 	for(i=0; i<NUM_THREADS;i++)
 	{
-		pthread_create(&_thr[i], NULL, senderThreads, (void *) &i);
+		pthread_create(&_thr[i], NULL, senderThreads, (void *) i);
 		pthread_detach(_thr[i]);
 	}
 
