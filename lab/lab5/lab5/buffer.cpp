@@ -14,8 +14,7 @@ void initBuffer(TBuffer *buffer)
 void enq(TBuffer *buffer, const char *data, int len)
 {
 
-	if(buffer->count >= QLEN)
-		return;
+    sem_wait(&buffer->empty);
 
     pthread_mutex_lock(&buffer->mutex);
 
@@ -25,14 +24,14 @@ void enq(TBuffer *buffer, const char *data, int len)
 	buffer->len[buffer->back] = bytesToCopy;
 	buffer->count++;
 	buffer->back = (buffer->back + 1) % QLEN;
+    sem_post(&buffer->full);
     pthread_mutex_unlock(&buffer->mutex);
 }
 
 int deq(TBuffer *buffer, char *data)
 {
 
-	if(buffer->count == 0)
-		return -1;
+    sem_wait(&buffer->full);
 
     pthread_mutex_lock(&buffer->mutex);
 
@@ -40,6 +39,7 @@ int deq(TBuffer *buffer, char *data)
 	memcpy(data, buffer->data[buffer->front], len);
 	buffer->count--;
 	buffer->front = (buffer->front + 1) % QLEN;
+    sem_post(&buffer->empty);
     pthread_mutex_unlock(&buffer->mutex);
 	return len;
 }
