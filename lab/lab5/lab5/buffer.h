@@ -16,6 +16,8 @@ typedef struct
 	int len[QLEN];
 	int front, back;
 	int count;
+    pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
+    sem_t empty, full;
 } TBuffer;
 
 void initBuffer(TBuffer *buffer);
