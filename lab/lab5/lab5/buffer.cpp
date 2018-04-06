@@ -9,13 +9,14 @@ void initBuffer(TBuffer *buffer)
 	buffer->count=0;
 	buffer->front=0;
 	buffer->back=0;
+    sem_init(&buffer->full, 0, 0);
+    sem_init(&buffer->empty, 0, QLEN);
 }
 
 void enq(TBuffer *buffer, const char *data, int len)
 {
 
     sem_wait(&buffer->empty);
-
     pthread_mutex_lock(&buffer->mutex);
 
 	unsigned int bytesToCopy = (len < ENTRY_SIZE ? len : ENTRY_SIZE);
@@ -32,7 +33,6 @@ int deq(TBuffer *buffer, char *data)
 {
 
     sem_wait(&buffer->full);
-
     pthread_mutex_lock(&buffer->mutex);
 
 	int len = buffer->len[buffer->front];
