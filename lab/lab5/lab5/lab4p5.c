@@ -12,6 +12,13 @@
 #include <stdarg.h>
 #include <pthread.h>
 
+#include "buffer.cpp"
+
+#define NUM_THREADS            32
+
+TBuffer buffer;
+
+
 // Port Number
 #define PORTNUM            80
 
@@ -25,7 +32,7 @@
 #define MAX_FILE_SIZE    65000
 
 // Maximum length of a log entry
-#define LOG_BUFFER_LEN    1024
+#define LOG_BUFFER_LEN    65535 //1024
 
 // Maximum length of a filename
 #define MAX_FILENAME_LEN    128
@@ -65,6 +72,7 @@ volatile int freeThread = 0;
 
 int main(int ac, char **av)
 {
+
     logfptr = fopen("webserver.log", "w");
     if(logfptr == NULL)
     {
@@ -75,6 +83,8 @@ int main(int ac, char **av)
     pthread_t thread;
     pthread_create(&thread, NULL, loggerThread, NULL);
     pthread_detach(thread);
+
+    initBuffer(&buffer);
 
     startServer(PORTNUM);
 }
@@ -219,8 +229,15 @@ void writeLog(const char *format, ...)
 
     printf("%s", myBuffer); //debug
 
-    sprintf(logBuffer, "%s: %s", getCurrentTime(), myBuffer);
-    logReady=1;
+
+
+    // #### Write to the TBuffer instead
+    char data[LOG_BUFFER_LEN];
+    sprintf(data, "%s: %s", getCurrentTime(), myBuffer);
+
+    enq(&buffer, data, strlen(data)+1);
+    //sprintf(logBuffer, "%s: %s", getCurrentTime(), myBuffer);
+    //logReady=1;
 }
 
 void startServer(uint16_t portNum)
@@ -273,10 +290,13 @@ void startServer(uint16_t portNum)
 
 void * loggerThread (void * parameter) {
     while (1) {
-        if (logReady) {
-            pthread_mutex_lock(&mutex);
+        char data[LOG_BUFFER_LEN];
+        int len = deq(&buffer, data);
 
-            int results = fprintf(logfptr, "%s", logBuffer);
+        if(len >= 0)
+        {
+
+            int results = fprintf(logfptr, "%s\n", data);
 
             if (results == EOF) {
                 printf("Error saving to file!");
@@ -284,9 +304,6 @@ void * loggerThread (void * parameter) {
 
             fflush(logfptr);
 
-            logReady = 0;
-
-            pthread_mutex_unlock(&mutex);
         }
     }
 }

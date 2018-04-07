@@ -8,7 +8,7 @@
 #define QLEN		10
 
 // Length of each queue entry in bytes
-#define ENTRY_SIZE	64
+#define ENTRY_SIZE	65535
 
 typedef struct
 {
@@ -16,7 +16,7 @@ typedef struct
 	int len[QLEN];
 	int front, back;
 	int count;
-    pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t bmutex;
     sem_t empty, full;
 } TBuffer;
 
