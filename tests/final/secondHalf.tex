@@ -267,76 +267,155 @@
 		\includegraphics[width=0.8\linewidth ]{m2/entryOrganization}
 	\end{minipage}
 	
+\begin{definition}{\textbf{File Descriptor}}
+	Owner id; File type; Protection information; Mapping to physical disk blocks; Time of creation, last use, last modification; Reference counter.
+\end{definition}
 
+\begin{definition}{\textbf{OFT - Open file table}}
+	keeps track of currently open files. \textbf{OFT entries}: current position; information from descriptor (file length, disk location); pointers to allocated buffers.
+\end{definition}
+
+\begin{definition}{\textbf{Basic File System Operations}}
+	\begin{myitemize}
+		\item \textbf{\textsf{open} file}
+		\begin{myenumerate}
+			\item Search directory for given file and verify access rights
+			\item Allocate and fill in OFT entries and read/write buffers
+			\item Return OFT index
+		\end{myenumerate}
+		\item \textbf{\textsf{close} command}
+		\begin{myenumerate}
+			\item Flush modified buffers to disk and release buffers
+			\item Update file descriptor (file length, disk location, usage information)
+			\item Free OFT entry
+		\end{myenumerate}
+		\item \textbf{\textsf{read} command}: assume file is open for \textbf{sequential} access
+		\begin{myitemize}
+			\item \textbf{Buffered read}: current block kept in r/w buffer
+			\begin{myenumerate}
+				\item copy from buffer to memory until desired count or end of file is reached: - update current position, return status
+				\item copy from buffer to memory until end of buffer is reached: write the buffer to disk if modified; read the next block; continue copying
+			\end{myenumerate}
+			\item \textbf{Unbuffered read}: read the entire block containing the needed data from disk
+		\end{myitemize}
+		\item \textbf{\textsf{write} command (buffered)}
+		\begin{myenumerate}
+			\item Write into buffer,
+			\item When full, write buffer to disk. If next block does not exist (file is expanding): - allocate new block -update file descriptor - update bit map (free space on disk).
+			\item Update file length in descriptor
+		\end{myenumerate}
+		\item \textbf{\textsf{seek} command}
+		\begin{myenumerate}
+			\item Set current position as specified by parameter
+			\item Read block containing current position into buffer
+		\end{myenumerate}
+		\item \textbf{\textsf{rewind} command}: analogous to seek but position is zero
+	\end{myitemize}
+\end{definition}
 	
+\begin{definition}{\textbf{Organising data on a disk}}
 
+	\includegraphics[width=0.48\linewidth]{m2/diskOrgnization1}
+	\includegraphics[width=0.48\linewidth]{m2/diskOrgnization2}
+\end{definition}
 
+\begin{definition}{\textbf{Fragmentation}}
+	\begin{myitemize}
+		\item \textbf{Internal fragmentation}: Due to the rules governing memory allocation, more computer memory is sometimes allocated than is needed. Any process, no matter how small, occupies an entire partition. This waste is called internal fragmentation. (unused memory within the allocated region)
+		\item \textbf{External fragmentation}: External fragmentation arises when free memory is separated into small blocks and is interspersed by allocated memory. (unusable storage is outside the allocated regions.)
+	\end{myitemize}
+\end{definition}
 	
-	
-	
+\begin{definition}{\textbf{Data structures on Disk}}
+	\textbf{Note}: need to record which block belongs to which part of files. Data structure must also be stored on disk.
+	\begin{myitemize}
+		\item \textbf{Contiguous organization}
+		\begin{myenumerate}
+			\item \textbf{Advantages}: Simple implementation; Fast sequential access (minimal arm movement)
+			\item \textbf{Disadvantages}: Insert/delete is difficult; How much space to allocate initially? External fragmentation
 
+			\includegraphics[width=1.0\linewidth]{m2/contiguousOrganization}
+		\end{myenumerate}
+		\item \textbf{Linked organization}
+		\begin{myenumerate}
+			\item \textbf{Advantages}: Simple insert/delete, no external fragmentation
+			\item \textbf{Disadvantages}: Sequential access less efficient (seek latency); Direct access not possible; Poor reliability (when chain breaks)
 
+			\includegraphics[width=1.0\linewidth]{m2/linkedOrganization}
+			
+			\item \textbf{Linked Variation 1}: keep pointers segregated, may be cached.
+
+			\includegraphics[width=1.0\linewidth]{m2/linkedVariation1}
+			
+			\item \textbf{Linked Variation 2}: Link sequences of adjacent blocks, rather than individual blocks 
+			
+			\includegraphics[width=1.0\linewidth]{m2/linkedVariation2}
+			
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT1}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT2}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT3}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT4}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT5}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT6}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT7}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT8}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT9}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT10}
+			\begin{center}
+				\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT11}
+			\end{center}
+		\end{myenumerate}
+		
+		\item \textbf{Indexed organization}
+		\begin{myenumerate}
+			\item \textbf{Index table}: sequential list of records; \textbf{implementation}: keep index list in descriptor 
+			\item \textbf{Advantage}: Insert/delete is easy; Sequential and direct access is efficient
+			\item \textbf{Disadvantage}: file size limited by number of index entries
+			
+			\includegraphics[width=1.0\linewidth]{m2/indexedOrganization}
+			
+			\item \textbf{Multi-level index hierarchy}: Primary index points to secondary indices \textbf{Problem}: number of disk accesses increases with depth of hierarchy.
+			\item \textbf{Incremental indexing}: number of disk accesses increases with depth of hierarchy; When insufficient, allocate additional index levels; \textbf{Example}: Unix, 3-level expansion.
+			
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem1}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem2}
+			
+			\begin{minipage}{0.5\linewidth}
+				\includegraphics[width=1.0\linewidth]{m2/systemVFileSystem3}
+			\end{minipage}
+			\begin{minipage}{0.5\linewidth}
+				\textbf{Incremental indexing in Unix} (file size vs. speed of access)
+				\begin{myitemize}
+					\item blocks 0-9: 1 access (direct).
+					\item blocks 10-137: 2 access.
+					\item blocks 138-16521: 3 access. etc.
+				\end{myitemize}
+				
+				\includegraphics[width=1.0\linewidth]{m2/systemVFileSystem4}
+			\end{minipage}
+			
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem5}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem6}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem7}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem8}
+		\end{myenumerate}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Free storage space management}}
+	\begin{myitemize}
+		\item \textbf{Linked list organization}
+		\begin{myenumerate}
+			\item Linking \textbf{individual} blocks: inefficient; no blocks clustering to minimise seek operations; groups of blocks are allocated/released one at a time.
+			\item Better: Link \textbf{groups} of consecutive blocks
+		\end{myenumerate}
+		\item \textbf{Bit map organization}
+		\begin{myenumerate}
+			\item Analogous to main memory
+			\item A single bit per block indicating if free or occupied
+		\end{myenumerate}
+	\end{myitemize}
+\end{definition}
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
-\newpage
-
-{\color{red} red } \textsf{sftext} \texttt{tttext}
-\begin{tcolorbox} 
-Penghao is the best \LaTeX \, writer.
-\end{tcolorbox}
-\begin{tcolorbox}
-	\begin{lstlisting}
-		def func():
-			print("Penghao is cool!")
-	\end{lstlisting}
-\end{tcolorbox}
-\noindent{}\\\noindent$\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp\wp$\\
-{}\\
-\lipsum[1]
-
-% ---- important examples ----%
-\vspace{-\topsep}
-\begin{enumerate}
-	\item 123
-	\item 123
-	\item 123
-\end{enumerate}
-\vspace{-\topsep}
-
-\begin{center}
- \begin{tabular}{|| c || c | c | c |c |c ||} 
- \hline
-  & M1 & M2 & M3 & M4 & M5 \\ [0.5ex] 
- \hline\hline
- M1 & 0 & 108 & 180 & 228 & 396 \\ 
- \hline
- M2 &  & 0 & 72 & 168 & 288 \\
- \hline
- M3 &  &  & 0 & 48 & 144 \\
- \hline
- M4 &  &  &  & 0 & 128 \\
- \hline
- M5 &  &  & &  & 0   \\ [0.5ex] 
- \hline
-\end{tabular}
-\end{center}
-
-\begin{algorithm}
-\caption{title}
-%\begin{multicols}{2}
-\begin{algorithmic}[1]
-\State 123
-\end{algorithmic}
-%\end{multicols}
-\end{algorithm}
-
-\begin{thebibliography}{9}
- 
-\bibitem{einstein} 
-Albert Einstein. 
-\textit{Zur Elektrodynamik bewegter K{\"o}rper}. (German) 
-[\textit{On the electrodynamics of moving bodies} \url{www.google.com.sg}]. 
-Annalen der Physik, 322(10):891–921, 1905.
-\end{thebibliography}
-
 \end{document}
