@@ -82,7 +82,7 @@ TPrioNode *currProcessNode; // Current process
 #if SCHEDULER_TYPE == 0
 
 // Searches the active list for the next priority level with processes
-int findNextPrio(int currPrio)
+int findNextPrio()
 {
 	int i;
 
@@ -93,16 +93,7 @@ int findNextPrio(int currPrio)
 	return -1; 
 
 }
-
-int findProcess(int procNum) {
-    for (int i = 0; i< NUM_PROCESSES; i++) {
-        if (processes[i].procNum == procNum) {
-            return i;
-        }
-    }
-    return -1;
-}
-
+bool test = true;
 // Linux style scheduler algorithm
 int linuxScheduler()
 {
@@ -122,34 +113,50 @@ int linuxScheduler()
 		THIS FUNCTION SHOULD UPDATE THE VARIOUS QUEUES AS IS NEEDED
 		TO IMPLEMENT SCHEDULING */
 
+    if (test) {
+        test = false;
+        activeList[15] = NULL;
+        insert(&activeList[15], processes[0].procNum, processes[0].quantum);
+        insert(&activeList[15], processes[5].procNum, processes[5].quantum);
+    }
 
-    int nextPrio = findNextPrio(currPrio);
-    int procNum, processIndex;
+    /*
+    printf("%d\n", activeList[15] -> procNum);
+    printf("%d\n", activeList[15] -> quantum);
+    printf("%d\n", processes[0].procNum);
+    printf("%d\n", processes[0].quantum);
+    //printf("%d\n", activeList[15] -> prev -> procNum);
+    //printf("%d\n", activeList[15] -> next -> procNum);
+
+    exit(0); */
+
+    int nextPrio = findNextPrio();
+    int procNum;
 
     if (nextPrio != -1) {
 
         // check if current process finished, update procNum
         procNum = activeList[nextPrio] -> procNum;
-        processIndex = findProcess(procNum);
-        if (processes[processIndex].timeLeft <= 0) {
+        processes[procNum].timeLeft --;
+        if (processes[procNum].timeLeft <= 0) {
 
-            int quantum = processes[processIndex].quantum;
+            int quantum = processes[procNum].quantum;
             remove(&activeList[nextPrio]);
             insert(&expiredList[nextPrio], procNum, quantum);
+            //set back the time left
+            processes[procNum].timeLeft = quantum;
         }
 
     } else {
-        //printf("\n------ SWAP LISTS ------ \n");
+        printf("\n ****** SWAP LISTS ****** \n\n");
         TNode ** tempPointer = activeList;
         activeList = expiredList;
         expiredList = tempPointer;
+
+        procNum = activeList[findNextPrio()] -> procNum;
     }
 
-    //find process and update process time left
-    procNum = activeList[findNextPrio(nextPrio)] -> procNum;
-    processIndex = findProcess(procNum);
-    processes[processIndex].timeLeft --;
-    //printf("running process %d timeLeft %d \n", procNum, processes[processIndex].timeLeft);
+
     return procNum;
 }
 
@@ -200,8 +207,8 @@ void timerISR()
 	{
 
 		// Print process details for LINUX scheduler
-		printf("Time: %d Process: %d Prio Level: %d Quantum : %d TimeLeft : %d\n", timerTick, processes[currProcess].procNum+1,
-			processes[currProcess].prio, processes[currProcess].quantum, processes[currProcess].timeLeft);
+		printf("Time: %d Process: %d Prio Level: %d Quantum : %d\n", timerTick, processes[currProcess].procNum+1,
+			processes[currProcess].prio, processes[currProcess].quantum);
 		prevProcess=currProcess;
 	}
 #elif SCHEDULER_TYPE == 1
@@ -271,7 +278,7 @@ void startOS()
 {
 #if SCHEDULER_TYPE == 0
 	// There must be at least one process in the activeList
-	currPrio = findNextPrio(0);
+	currPrio = findNextPrio();
 
 	if(currPrio < 0)
 	{
