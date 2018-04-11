@@ -93,6 +93,17 @@ int findNextPrio(int currPrio)
 	return -1; 
 
 }
+
+int findProcess(int procNum) {
+    for (int i = 0; i< NUM_PROCESSES; i++) {
+        if (processes[i].procNum == procNum) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Linux style scheduler algorithm
 int linuxScheduler()
 {
 	/* TODO: IMPLEMENT LINUX STYLE SCHEDULER
@@ -110,8 +121,39 @@ int linuxScheduler()
 
 		THIS FUNCTION SHOULD UPDATE THE VARIOUS QUEUES AS IS NEEDED
 		TO IMPLEMENT SCHEDULING */
-	return 0;
+
+
+    int nextPrio = findNextPrio(currPrio);
+    int procNum, processIndex;
+
+    if (nextPrio != -1) {
+
+        // check if current process finished, update procNum
+        procNum = activeList[nextPrio] -> procNum;
+        processIndex = findProcess(procNum);
+        if (processes[processIndex].timeLeft <= 0) {
+
+            int quantum = processes[processIndex].quantum;
+            remove(&activeList[nextPrio]);
+            insert(&expiredList[nextPrio], procNum, quantum);
+        }
+
+    } else {
+        //printf("\n------ SWAP LISTS ------ \n");
+        TNode ** tempPointer = activeList;
+        activeList = expiredList;
+        expiredList = tempPointer;
+    }
+
+    //find process and update process time left
+    procNum = activeList[findNextPrio(nextPrio)] -> procNum;
+    processIndex = findProcess(procNum);
+    processes[processIndex].timeLeft --;
+    //printf("running process %d timeLeft %d \n", procNum, processes[processIndex].timeLeft);
+    return procNum;
 }
+
+
 #elif SCHEDULER_TYPE == 1
 
 int RMSScheduler()
@@ -158,8 +200,8 @@ void timerISR()
 	{
 
 		// Print process details for LINUX scheduler
-		printf("Time: %d Process: %d Prio Level: %d Quantum : %d\n", timerTick, processes[currProcess].procNum+1,
-			processes[currProcess].prio, processes[currProcess].quantum);
+		printf("Time: %d Process: %d Prio Level: %d Quantum : %d TimeLeft : %d\n", timerTick, processes[currProcess].procNum+1,
+			processes[currProcess].prio, processes[currProcess].quantum, processes[currProcess].timeLeft);
 		prevProcess=currProcess;
 	}
 #elif SCHEDULER_TYPE == 1
