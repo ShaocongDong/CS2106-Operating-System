@@ -193,6 +193,15 @@ int RMSScheduler()
 
     TPrioNode *node;
     int procNum;
+
+    /*
+    printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
+    printf(">BLOCKED::::::\n");
+    printList(blockedQueue);
+    printf(">READY::::::\n");
+    printList(readyQueue);
+     */
+
     // Check ready nodes in blocked queue
     while ((node = checkReady(blockedQueue, timerTick)) != NULL) {
         prioRemoveNode(&blockedQueue, node);
