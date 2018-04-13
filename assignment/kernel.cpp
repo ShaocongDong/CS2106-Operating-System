@@ -184,7 +184,89 @@ int RMSScheduler()
 
 		THIS FUNCTION SHOULD UPDATE THE VARIOUS QUEUES AS IS NEEDED
 		TO IMPLEMENT SCHEDULING */
-	return 0;
+
+    /*/ Decrement the timeLeft for the current running
+    if (currProcessNode != NULL) {
+        processes[currProcessNode -> procNum].timeLeft --;
+    }*/
+
+
+    TPrioNode *node;
+    int procNum;
+    // Check ready nodes in blocked queue
+    while ((node = checkReady(blockedQueue, timerTick)) != NULL) {
+        prioRemoveNode(&blockedQueue, node);
+
+        //set up the newly inserted node timeLeft and deadline
+        procNum = node -> procNum;
+        processes[procNum].timeLeft = processes[procNum].c;
+        processes[procNum].deadline = timerTick + processes[procNum].p;
+
+        prioInsertNode(&readyQueue, node);
+    }
+
+    if (currProcessNode != NULL) {
+        procNum = currProcessNode -> procNum;
+
+        // Check if the current process is finished
+        if (processes[procNum].timeLeft == 0) {
+            prioInsertNode(&blockedQueue, currProcessNode);
+            currProcessNode = NULL;
+
+            // Check for the next ready process, compare with suspended one if any
+            if (peek(readyQueue)) {
+                if (suspended != NULL &&
+                    peek(readyQueue) -> p > suspended -> p) {
+                    currProcessNode = suspended;
+                    suspended = NULL;
+                } else {
+                    currProcessNode = prioRemove(&readyQueue);
+                }
+            }
+        } else {
+            // update current procNum if needed
+            node = peek(readyQueue);
+            if(currProcessNode == NULL ||
+               (node != NULL && currProcessNode != NULL && node -> p < currProcessNode -> p)) {
+                printf("\n --- PRE EMPTION --- \n\n");
+                suspended = currProcessNode;
+                currProcessNode = prioRemove(&readyQueue);
+            }
+        }
+    } else {
+        // Check for the next ready process, compare with suspended one if any
+        if (peek(readyQueue)) {
+            if (suspended != NULL &&
+                peek(readyQueue) -> p > suspended -> p) {
+                currProcessNode = suspended;
+                suspended = NULL;
+            } else {
+                currProcessNode = prioRemove(&readyQueue);
+            }
+        }
+    }
+
+    // Run the suspended process if any if no one else is running
+    if (currProcessNode == NULL && suspended != NULL) {
+        currProcessNode = suspended;
+        suspended = NULL;
+    }
+
+    // Run the process and return the value
+    if (currProcessNode != NULL) {
+
+        // run the process, decrement timeLeft
+        procNum = currProcessNode -> procNum;
+
+
+        processes[procNum].timeLeft --;
+        //return 0;
+        return procNum;
+
+    } else {
+        return -1;
+    }
+
 }
 
 #endif
@@ -265,7 +347,6 @@ void startTimer()
 
 	// Find LCM of all periods
 	int lcm = prioLCM(readyQueue);
-
 	for(i=0; i<NUM_RUNS*lcm; i++)
 	{
 		timerISR();

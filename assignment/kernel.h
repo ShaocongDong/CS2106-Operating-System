@@ -7,7 +7,7 @@
 // 0 = LINUX
 // 1 = RMS
 
-#define SCHEDULER_TYPE 0
+#define SCHEDULER_TYPE 1
 
 #define NUM_PROCESSES 	10
 #define NUM_RUNS		2
