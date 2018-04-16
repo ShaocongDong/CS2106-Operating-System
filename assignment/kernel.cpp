@@ -114,13 +114,11 @@ int linuxScheduler()
 		TO IMPLEMENT SCHEDULING */
 
     // check if current process finished
-    if (processes[currProcess].timeLeft > 0) {
-        processes[currProcess].timeLeft --;
-        return currProcess;
-
-    } else {
+    //printf("Time: %d, Current Process: %d, time left: %d\n", timerTick, currProcess + 1, processes[currProcess].timeLeft);
+    if (processes[currProcess].timeLeft == 0) {
 
         // expire and reinitiate the just finished running process
+
         insert(&expiredList[currPrio], processes[currProcess].procNum,
                processes[currProcess].quantum);
         processes[currProcess].timeLeft = processes[currProcess].quantum;
@@ -148,8 +146,11 @@ int linuxScheduler()
         //set the current running process
         currProcess = procNum;
         remove(&activeList[currPrio]);
-        return procNum;
+
     }
+
+    processes[currProcess].timeLeft --;
+    return currProcess;
 }
 
 
