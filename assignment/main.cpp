@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "kernel.h"
 
-#define MISS_DEADLINE		1
+#define MISS_DEADLINE		0
 int main()
 {
 	initOS();

@@ -177,15 +177,9 @@ int RMSScheduler()
 		THIS FUNCTION SHOULD UPDATE THE VARIOUS QUEUES AS IS NEEDED
 		TO IMPLEMENT SCHEDULING */
 
-    /*/ Decrement the timeLeft for the current running
-    if (currProcessNode != NULL) {
-        processes[currProcessNode -> procNum].timeLeft --;
-    }*/
-
 
     TPrioNode *node;
     int procNum;
-
     /*
     printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
     printf(">BLOCKED::::::\n");
@@ -193,6 +187,7 @@ int RMSScheduler()
     printf(">READY::::::\n");
     printList(readyQueue);
      */
+
 
     // Check ready nodes in blocked queue
     while ((node = checkReady(blockedQueue, timerTick)) != NULL) {
@@ -202,38 +197,27 @@ int RMSScheduler()
         procNum = node -> procNum;
         processes[procNum].timeLeft = processes[procNum].c;
         processes[procNum].deadline = timerTick + processes[procNum].p;
-
         prioInsertNode(&readyQueue, node);
     }
 
     if (currProcessNode != NULL) {
         procNum = currProcessNode -> procNum;
 
-        // Check if the current process is finished
-        if (processes[procNum].timeLeft == 0) {
-            prioInsertNode(&blockedQueue, currProcessNode);
-            currProcessNode = NULL;
-
-            // Check for the next ready process, compare with suspended one if any
-            if (peek(readyQueue)) {
-                if (suspended != NULL &&
-                    peek(readyQueue) -> p > suspended -> p) {
-                    currProcessNode = suspended;
-                    suspended = NULL;
-                } else {
-                    currProcessNode = prioRemove(&readyQueue);
-                }
-            }
-        } else {
-            // update current procNum if needed
-            node = peek(readyQueue);
-            if(currProcessNode == NULL ||
-               (node != NULL && currProcessNode != NULL && node -> p < currProcessNode -> p)) {
-                printf("\n --- PRE EMPTION --- \n\n");
-                suspended = currProcessNode;
-                currProcessNode = prioRemove(&readyQueue);
-            }
+        // Check missed deadline nodes in blockedQueue and add to ready list
+        if (processes[procNum].timeLeft == -1) {
+            processes[procNum].timeLeft = processes[procNum].c;
+            processes[procNum].deadline = (timerTick / processes[procNum].p + 1) * processes[procNum].p;
+            //printf("timer %d, p %d, operator result %d, Deadline changed to %d\n",timerTick, processes[procNum].p, timerTick / processes[procNum].p + 1, processes[procNum].deadline);
         }
+
+        // update current procNum if needed
+        node = peek(readyQueue);
+        if (node != NULL && node -> p < currProcessNode -> p) {
+            printf("\n --- PRE EMPTION --- \n\n");
+            suspended = currProcessNode;
+            currProcessNode = prioRemove(&readyQueue);
+        }
+
     } else {
         // Check for the next ready process, compare with suspended one if any
         if (peek(readyQueue)) {
@@ -244,6 +228,9 @@ int RMSScheduler()
             } else {
                 currProcessNode = prioRemove(&readyQueue);
             }
+        } else {
+            currProcessNode = suspended; // pick suspended if any
+            suspended = NULL;
         }
     }
 
@@ -261,7 +248,21 @@ int RMSScheduler()
 
 
         processes[procNum].timeLeft --;
-        //return 0;
+
+        // Check if the current process is finished
+        if (processes[procNum].timeLeft == 0) {
+
+            // Note: check if the current process has missed the deadline,
+            // this process should remain active instead of being blocked
+            // therefore we just update its deadline and timeLeft
+            if (timerTick + 1 >= processes[procNum].deadline) {
+                processes[procNum].timeLeft = -1;
+            } else {
+                prioInsertNode(&blockedQueue, currProcessNode);
+                currProcessNode = NULL;
+            }
+        }
+
         return procNum;
 
     } else {
