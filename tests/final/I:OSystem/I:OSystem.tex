@@ -106,22 +106,225 @@
 \maketitle
 \section{I/O System}
 
+\begin{definition}{\textbf{I/O Devices}}
+	\begin{myitemize}
+		\item \textbf{Communication devices}: Input only (mouse, keyboard); output only (display); Input/output (network card)
+		\item \textbf{Storage devices}: Input/output (disk, tape); Input only (CD-ROM)
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Main tasks of I/O System}}
+	\begin{myitemize}
+		\item Present \textbf{logical} (abstract) view of devices (\textbf{hide}: details of hardware interface and error handling)
+		\item Facilitate \textbf{efficient} use: overlap CPU and I/O
+		\item Support \textbf{sharing} of devices: protection when device is shared (disk), scheduling when exclusive access needed (printer)
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Block-Oriented Device Interface}}
+	\begin{myitemize}
+		\item \textbf{Description}: direct access, contiguous blocks, usually fixed block size
+		\item \textbf{Operation}:
+		\begin{myitemize}
+			\item \textbf{Open}: verify device is ready, prepare it for access
+			\item \textbf{Read}: Copy a block into main memory 
+			\item \textbf{Write}: Copy a portion of main memory to a block
+			\item \textbf{Close}: Release the device
+			\item \textbf{*Note}: these are lower level than those of the FS 
+		\end{myitemize}
+		\item \textbf{Application}: Used by File System and Virtual Memory System; Applications typically go through the File System
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Stream-Oriented Device Interface}}
+	\begin{myitemize}
+		\item \textbf{Description}: character-oriented, sequential access
+		\item \textbf{Operation}:
+		\begin{myitemize}
+			\item \textbf{Open}: reserve exclusive access
+			\item \textbf{Get}: return next character of input stream
+			\item \textbf{Put}: append character to output stream
+			\item \textbf{Close}: release exclusive access
+			\item \textbf{*Note}: these too are different from those of the FS but some systems try to present a uniform view of files and devices 
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{minipage}{0.35\linewidth}
+	\begin{definition}{\textbf{I/O Devices - Ouput}}
+		\begin{myitemize}
+			\item \textbf{Display monitors}: 
+			\begin{myitemize}
+				\item character or  graphics oriented
+				\item Different data rates: 25 x 80 characters vs 800 x 600 pixels (1B allows 256 colors) Refresh 30-60 times/s for video 
+			\end{myitemize}
+			\item \textbf{Printers (ink jet, laser)}
+			\item \textbf{Interface}:
+			\begin{myitemize}
+				\item \textbf{write} to controller buffer
+				\item \textbf{wait} for completion
+				\item handle \textbf{errors}
+			\end{myitemize}
+		\end{myitemize}
+	\end{definition}
+\end{minipage}
+\begin{minipage}{0.65\linewidth}
+	\includegraphics[width=\linewidth]{m3/output}
+\end{minipage}
+
+\begin{definition}{\textbf{I/O Devices - Input}}
+	Keyboards, pointing devices (mouse, trackball, joystick), scanners. \textbf{Interface}: 
+	\begin{myitemize}
+		\item device generates interrupt when data is ready
+		\item read data from controller buffer
+		\item low data rates, not time-critical
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{I/O Devices - Storage}}
+
+	\begin{minipage}{0.3\linewidth}
+		\begin{myitemize}
+			\item Surface, tracks/surface, sectors/track, bytes/sector
+			\item All sectors numbered sequentially $0..(n-1)$, device controller provides mapping
+		\end{myitemize}
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView1}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView1}
+	\end{minipage}
+	
+	\begin{minipage}{0.3\linewidth}
+		\textbf{Track skew}: account for seek-to-next-track to minimise rotational delay
+		
+		\[\frac{\text{track to track seek time}}{\text{rotational time per track}} \times \text{sect} \]
+		\[\text{ors per track} = \text{offset}\]
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView3}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView4}
+	\end{minipage}
+	
+	\begin{minipage}{0.3\linewidth}
+		\textbf{Double-sided or multiple surfaces}
+		\begin{myitemize}
+			\item Tracks with same diameter = \textbf{cylinder}
+			\item Sectors are numbered within cylinder consecutively to \textbf{minimise seek time}
+		\end{myitemize}
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView5}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView6}
+	\end{minipage}
+	
+	\textbf{Critical issue: data transfer rates of disks}
+	\begin{myitemize}
+		\item \textbf{Sustained} rate: continuous data delivery
+		\item \textbf{Peek} rate: : transfer once read/write head is in place; depends on rotation speed and data density
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{Transfer rate calculation:}
+	7200 rpm, 100 sectors/track, 512 bytes/sector
+	\begin{myitemize}
+		\item What is the \textbf{peak} transfer rate?
+		\[\frac{7200}{60} \times 100 \times 512 \text{byte/s} \]
+		\item What is the \textbf{sustained} transfer rate? - Depends on file organization
+	\end{myitemize}
+\end{example}
+
+\begin{definition}{\textbf{I/O programming} - access the I/O devices}
+	\begin{myitemize}
+		\item \textbf{Polling} (You with a broken ringer)
+		
+		\begin{minipage}{0.48\linewidth}
+			\begin{myitemize}
+			\item Consider a process that prints “ABCDEFGH” on the printer: The OS then copies character by character onto the printer’s latch, and the printer prints it out.
+			\begin{myenumerate}
+				\item Copy the first character and advance the buffer’s pointer. 
+				\item Check that the printer is ready for the next character. If not, wait. This is called ``busy-waiting'' or ``polling''.
+				\item Copy the next character. Repeat until buffer is empty.
+			\end{myenumerate}
+		\end{myitemize}
+		\end{minipage}\hspace{2mm}
+		\begin{minipage}{0.48\linewidth}
+				\includegraphics[width=\linewidth]{m3/polling}
+				\includegraphics[width=\linewidth]{m3/polling1}
+		\end{minipage}
+		
+		\textbf{Issue}: It takes perhaps 10ms to print a character. During this time, the CPU will be busy-waiting until the printer is done printing. On a 3.2 GHz processor this is equivalent to wasting 320,000,000 instructions! 
 
 
+		\item \textbf{Interrupt-driven I/O} (You with a fully functioning phone)
 
+		\begin{minipage}{0.35\linewidth}
+		\begin{myitemize}
+			\item After the string is copied, the OS will send a character to the printer, then switch to a task.
+			\item When the printer is done, it will interrupt the CPU by asserting one of the “interrupt request” (IRQ) lines on the CPU.
+		\end{myitemize}
+		\end{minipage}\hspace{5mm}
+		\begin{minipage}{0.6\linewidth}
+			\includegraphics[width=\linewidth]{m3/InterruptIO}
+		\end{minipage}
+		\item \textbf{Direct memory access} (You have an answering machine)
+		\begin{myitemize}
+			\item \textbf{Driver (CPU) operation to input sequence of bytes:}
+			\begin{tcolorbox}
+			
+				write\_reg(mm\_buf, m);     // give parameters
+			
+			write\_reg(count, n);
+			
+			write\_reg(opcode, read);  // start op
+			
+			block to wait for interrupt;
 
+			\end{tcolorbox}
+						\begin{myitemize}
+				\item Writing opcode triggers DMA controller
+				\item DMA controller issues interrupt after n chars in memory
+			\end{myitemize}
+			\item \textbf{Cycle Stealing}: 
+			\begin{myitemize}
+				\item DMA controller competes with CPU for memory access 
+				\item generally not a problem because: 1. Memory reference would have occurred anyway; 2. CPU is frequently referencing data in registers or cache, bypassing main memory.
+			\end{myitemize}
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
 
+\begin{definition}{\textbf{Device Management}}
+	\begin{myitemize}
+		\item \textbf{Disk Scheduling}: Requests for different blocks arrive concurrently from different processes
+		\item Minimize \textbf{rotational delay}: re-order requests to blocks on each track to access in one rotation
+		\item Minimize \textbf{seek time}: Conflicting goals: Minimize total travel distance; Guarantee fairness
+	\end{myitemize}
+\end{definition}
 
+\begin{algoalgorithm}{\textbf{Device Management}}
 
-
-
-
-
-
-
-
-
-
+	\begin{minipage}{0.55\linewidth}
+		\begin{myitemize}
+		\item \textbf{FIFO}: requests are processed in the order of arrival: simple, fair, but inefficient
+		\item \textbf{SSTF} (Shortest Seek Time First): most efficient but prone to starvation
+		\begin{myitemize}
+			\item always go to the track that’s nearest to the current positions
+		\end{myitemize} 
+		\item \textbf{Scan} (Elevator): fair, acceptable performance
+		\begin{myitemize}
+			\item maintain a direction of travel
+			\item always proceed to the nearest track in the current direction of travel
+			\item if there is no request in the current direction, reverse direction
+		\end{myitemize}
+	\end{myitemize}
+	\end{minipage}\hspace{5mm}
+	\begin{minipage}{0.4\linewidth}
+	
+		\textbf{Example}: assume moving from 0 to 5; then 12,4,7 arrive
+		\includegraphics[width=\linewidth]{m3/deviceManagementAlgo}
+	\end{minipage}
+	
+\end{algoalgorithm}
 
 
 
