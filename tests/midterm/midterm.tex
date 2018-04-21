@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
 % package importing
 %\usepackage[margin=2cm]{geometry}
@@ -6,9 +6,9 @@
  \geometry{
  a4paper,
  %total={170mm,257mm},
- left=10mm,
+ left=20mm,
  top=20mm,
- right=10mm,
+ right=20mm,
  bottom=20mm,
  }
  		%$$$$$$ fonts settings $$$$$$%
@@ -150,9 +150,9 @@
 \begin{tcolorbox}
 	\textsf{Abstraction Layer \& Opearating System Structure}
 	
-	\includegraphics[scale=0.3]{m1/operatingSystemStructure}
+	\includegraphics[scale=0.25]{m1/operatingSystemStructure}
 		\centering
-	\includegraphics[scale=0.4]{m1/abstractionLayerDescription}
+	\includegraphics[scale=0.35]{m1/abstractionLayerDescription}
 		\centering
 \end{tcolorbox}
 
@@ -636,8 +636,8 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \begin{tcolorbox}
 	\textsf{Terminating a process}
 	
-	\includegraphics[scale=0.33]{m1/terminatingProcess1}
-	\includegraphics[scale=0.33]{m1/terminatingProcess2}
+	\includegraphics[scale=0.27]{m1/terminatingProcess1}
+	\includegraphics[scale=0.27]{m1/terminatingProcess2}
 	\centering
 \end{tcolorbox}
 
@@ -655,16 +655,16 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 \begin{tcolorbox}
 	\textsf{Waiting for Child Processes to Terminate - process interaction}
 	
-	\includegraphics[scale=0.33]{m1/parentWait1}
-	\includegraphics[scale=0.33]{m1/parentWait2}
+	\includegraphics[scale=0.27]{m1/parentWait1}
+	\includegraphics[scale=0.27]{m1/parentWait2}
 	\centering
 \end{tcolorbox}
 
 \begin{tcolorbox}
 	\textsf{Zombie Process}
 	
-	\includegraphics[scale=0.30]{m1/zombieProcess1}
-	\includegraphics[scale=0.30]{m1/zombieProcess2}
+	\includegraphics[scale=0.27]{m1/zombieProcess1}
+	\includegraphics[scale=0.27]{m1/zombieProcess2}
 	\centering
 \end{tcolorbox}
 
@@ -1056,8 +1056,8 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 			\begin{tcolorbox}
 				\textsf{Problems with Semaphores: Deadlock} (on the left is the correct version)
 				
-				\includegraphics[scale=0.52]{m1/producerConsumerCode1}
-				\includegraphics[scale=0.52]{m1/producerConsumerCode2}
+				\includegraphics[scale=0.45]{m1/producerConsumerCode1}
+				\includegraphics[scale=0.45]{m1/producerConsumerCode2}
 				\centering
 			\end{tcolorbox}
 			\item Producer successfully DOWNs the mutex.
@@ -1202,6 +1202,25 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 	\end{myitemize}
 \end{remark}
 
+\begin{remark}
+	\begin{myitemize}
+		\item conditional variables can also be used together with mutexes:
+		\begin{myenumerate}
+			\item acquire mutex \textsf{pthread\_mutex\_lock(\&mutex)}
+			\item wait on a conditional variable \textsf{pthread\_cond\_wait(\&v,\&mutex)}
+			\item When conditional wait has exited, the signal has been received, other stuffs can be done.
+			\item unlock the mutex \textsf{pthread\_mutex\_unlock(\&mutex)}
+			\item \textbf{Note}: It is important for conditional variables to be used within a mutual exclusion: Mutual exclusion prevents a process from being pre-empted before it has had a chance to sleep, eliminating the lost-signal problem. \textsf{pthread\_cond\_wait} automatically gives up the mutex so that other process can do stuff and then wake up it with good `results' to use.
+		\end{myenumerate}
+		\item Implement conditional variables using only mutex and semaphores
+
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem1}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem2}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem3}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem4}
+	\end{myitemize}
+\end{remark}
+
 \begin{definition}{\textbf{Barrier}}
 	is a special form of synchronization mechanism that works with groups of processes rather than single processes.
 	\begin{center}
@@ -1231,7 +1250,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\item Meaning: search for occurrences of string ''buffer'' in C files (grep process), sort those lines making them unique (sort process), and count how many occurrences  (wc process)
 	\end{myitemize}
 	\begin{center}
-		\includegraphics[scale=0.4]{m1/unixPipe}
+		\includegraphics[scale=0.35]{m1/unixPipe}
 	\end{center}
 	\item Creating pipes: \textsf{int pipe(int fd\_array[])} returns 2 file descriptor for the (anonymous) pipe
 	\begin{myitemize}

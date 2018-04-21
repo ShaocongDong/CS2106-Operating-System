@@ -1,6 +1,7 @@
 #########################
 # For taxpad
 tests/.texpadtmp/*
+tests/midterm/.texpadtmp/*
 # .gitignore file for Xcode4 and Xcode5 Source projects
 #
 # Apple bugs, waiting for Apple to fix/respond:
