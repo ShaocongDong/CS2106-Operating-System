@@ -268,29 +268,30 @@
 	\end{minipage}
 	
 \begin{definition}{\textbf{File Descriptor}}
-	Owner id; File type; Protection information; Mapping to physical disk blocks; Time of creation, last use, last modification; Reference counter.
+	Owner id; File type (whether it's a folder, a file, a symbolic link etc.); Protection information; Mapping to physical disk blocks; Time of creation, last use, last modification; Reference counter.
 \end{definition}
 
 \begin{definition}{\textbf{OFT - Open file table}}
-	keeps track of currently open files. \textbf{OFT entries}: current position; information from descriptor (file length, disk location); pointers to allocated buffers.
+	keeps track of currently open files. \textbf{OFT entries}: current position (read to which part); information from descriptor (file length, disk location); pointers to allocated buffers. \textbf{Two types}: system OFT (system-wide), process OFT (open files by a process)
 \end{definition}
 
 \begin{definition}{\textbf{Basic File System Operations}}
 	\begin{myitemize}
-		\item \textbf{\textsf{open} file}
+		\item \textbf{\textsf{open} file} \textsf{FILE *fopen(const char *filename, const char *mode)}
 		\begin{myenumerate}
 			\item Search directory for given file and verify access rights
 			\item Allocate and fill in OFT entries and read/write buffers
 			\item Return OFT index
 		\end{myenumerate}
-		\item \textbf{\textsf{close} command}
+		\item \textbf{\textsf{close} command} \textsf{int fclose(FILE *stream)}
 		\begin{myenumerate}
 			\item Flush modified buffers to disk and release buffers
 			\item Update file descriptor (file length, disk location, usage information)
 			\item Free OFT entry
 		\end{myenumerate}
-		\item \textbf{\textsf{read} command}: assume file is open for \textbf{sequential} access
+		\item \textbf{\textsf{read} command} \textsf{size\_t fread(void *ptr, size\_t size (of element), size\_t nmemb (number of elements), FILE *stream)}
 		\begin{myitemize}
+			\item assume file is open for \textbf{sequential} access
 			\item \textbf{Buffered read}: current block kept in r/w buffer
 			\begin{myenumerate}
 				\item copy from buffer to memory until desired count or end of file is reached: - update current position, return status
@@ -298,13 +299,13 @@
 			\end{myenumerate}
 			\item \textbf{Unbuffered read}: read the entire block containing the needed data from disk
 		\end{myitemize}
-		\item \textbf{\textsf{write} command (buffered)}
+		\item \textbf{\textsf{write} command (buffered)} \textsf{size\_t fwrite(const void *ptr, size\_t size, size\_t number, FILE *stream)}
 		\begin{myenumerate}
 			\item Write into buffer,
 			\item When full, write buffer to disk. If next block does not exist (file is expanding): - allocate new block -update file descriptor - update bit map (free space on disk).
 			\item Update file length in descriptor
 		\end{myenumerate}
-		\item \textbf{\textsf{seek} command}
+		\item \textbf{\textsf{seek} command} \textsf{int fseek(FILE *stream, long int offset, int whence)}
 		\begin{myenumerate}
 			\item Set current position as specified by parameter
 			\item Read block containing current position into buffer
@@ -343,7 +344,7 @@
 
 			\includegraphics[width=1.0\linewidth]{m2/linkedOrganization}
 			
-			\item \textbf{Linked Variation 1}: keep pointers segregated, may be cached.
+			\item \textbf{Linked Variation 1}: keep pointers segregated, may be cached. (FAT32)
 
 			\includegraphics[width=1.0\linewidth]{m2/linkedVariation1}
 			
@@ -373,6 +374,8 @@
 			\item \textbf{Disadvantage}: file size limited by number of index entries
 			
 			\includegraphics[width=1.0\linewidth]{m2/indexedOrganization}
+			
+			Block 6 contains bytes 0-1023, block 18 contains bytes 1024-2047, etc (1024 bytes block).
 			
 			\item \textbf{Multi-level index hierarchy}: Primary index points to secondary indices \textbf{Problem}: number of disk accesses increases with depth of hierarchy.
 			\item \textbf{Incremental indexing}: number of disk accesses increases with depth of hierarchy; When insufficient, allocate additional index levels; \textbf{Example}: Unix, 3-level expansion.
@@ -409,7 +412,7 @@
 			\item Linking \textbf{individual} blocks: inefficient; no blocks clustering to minimise seek operations; groups of blocks are allocated/released one at a time.
 			\item Better: Link \textbf{groups} of consecutive blocks
 		\end{myenumerate}
-		\item \textbf{Bit map organization}
+		\item \textbf{Bit map organization} (residing in super block)
 		\begin{myenumerate}
 			\item Analogous to main memory
 			\item A single bit per block indicating if free or occupied

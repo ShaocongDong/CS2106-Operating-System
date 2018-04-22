@@ -326,7 +326,35 @@
 	
 \end{algoalgorithm}
 
+\begin{remark}{\textbf{block size trade off}}
+	Larger block sizes means fewer blocks that the OS needs to manage, less overhead. Disadvantage is that there will be greater wastage within each block (internal fragmentation)
+\end{remark}
 
+\begin{method}{\textbf{Disk access time calculation}} Time is takes to read one block of data:
+
+\begin{myenumerate}
+	\item \textbf{Switch time}: This is the time it takes for the drive to choose the correct side of the correct platter. (can be negligible)
+	\item \textbf{Seek time}: This is the time it takes a drive's arm to move to the correct track.
+	\item \textbf{Rotational delay}: This is the time it takes for the correct block to move underneath the head. Conventionally, taken to be $\frac{T_r}{2}$, where $T_r$ is the time for one revolution.
+	\item \textbf{Transfer delay}: This is the time taken to actually transfer the block. If the disk can transfer M bytes per second and a block is B bytes long, then this time is $\frac{B}{M}$.
+\end{myenumerate}
+
+\begin{myitemize}
+	\item \textbf{Peak data transfer rate}: The drive cannot be transferring more in one second than the amount of data in one track, multiplied by the number of times that track goes past the head per second
+	
+	\[ \text{Blocks / Track} = 16, \text{Bytes / Block} = 32768 \]
+	\[\text{Bytes / Track} = 16 \times 32768=524288 \text{ bytes},  7200rpm=120rps \]
+	\[\text{peak throughput}= 120 \times 524288= 62.9 \text{Megabytes/Sec} (1 \text{megabyte/sec} = 10^6 \text{bytes/sec}) \]
+	
+	\item \textbf{Time taken on average to read one block of data}:
+	\[ \text{Average disk read time =  switching time+seek time+rotational delay+transfer time}\]
+	\[\text{rotational delay}=\frac{1}{2} \times \frac{1}{7200/60}=0.0042s \]
+	\[\text{Data through put} = 50 \text{ megabits per second} \]
+	\[\text{data transfer time}=32768\times 8 / (50,000,000)= 0.0052s = 5.2ms \]
+	\textbf{Note}: For storage we conventionally use 1KB = 1024 bytes, not 1000 bytes. However we use 1KB = 1000 bytes for throughput.
+\end{myitemize}
+
+\end{method}
 
 
 
