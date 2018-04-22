@@ -255,7 +255,14 @@
 
 \end{definition}
 
-
+\begin{example}{\textbf{Virtual memory calculation example}}
+	\begin{myitemize}
+		\item \textbf{Question}: consider a virtual memory system with 64 bytes per page, 10 bit virtual addresses and 9 bit physical addresses.
+		\item Maximum size in bytes of the virtual memory is $2^{10}=1024$ bytes. Maximum size of the physical memory is $2^{9}=512$ bytes.
+		\item Byte index is 6 bits ($2^6=64$), leaving 4 bits for VPN or 16 virtual pages, and 3 bits for PPN or 8 physical pages.
+		\item \textbf{translation procedure}: convert virtual address into binary $\rightarrow$ get the VPN $\rightarrow$ look up at the page table to get the PPN $\rightarrow$ add the byte index (last few bits just now) $\rightarrow$ convert the PPN and byte index from binary to decimal, this is the physical address.
+	\end{myitemize}
+\end{example}
 
 
 
