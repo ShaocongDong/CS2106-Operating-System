@@ -199,6 +199,7 @@
 		
 		\[\frac{\text{track to track seek time}}{\text{rotational time per track}} \times \text{sect} \]
 		\[\text{ors per track} = \text{offset}\]
+		\[\text{Round up the result} \]
 	\end{minipage}
 	\begin{minipage}{0.7\linewidth}
 		\includegraphics[width=0.5\linewidth]{m3/diskTrackView3}
@@ -252,7 +253,7 @@
 				\includegraphics[width=\linewidth]{m3/polling1}
 		\end{minipage}
 		
-		\textbf{Issue}: It takes perhaps 10ms to print a character. During this time, the CPU will be busy-waiting until the printer is done printing. On a 3.2 GHz processor this is equivalent to wasting 320,000,000 instructions! 
+		\textbf{Issue}: It takes perhaps 10ms to print a character. During this time, the CPU will be busy-waiting until the printer is done printing. On a 3.2 GHz processor this is equivalent to wasting 320,000,000 instructions! Extremely inefficient use of CPU as most polls are likely to fail. On the other hand not polling risks losing data. 
 
 
 		\item \textbf{Interrupt-driven I/O} (You with a fully functioning phone)
@@ -261,11 +262,13 @@
 		\begin{myitemize}
 			\item After the string is copied, the OS will send a character to the printer, then switch to a task.
 			\item When the printer is done, it will interrupt the CPU by asserting one of the “interrupt request” (IRQ) lines on the CPU.
+			\item \textbf{Comment}: Some overhead when the hardware is ready, but much less than with polling.
 		\end{myitemize}
 		\end{minipage}\hspace{5mm}
 		\begin{minipage}{0.6\linewidth}
 			\includegraphics[width=\linewidth]{m3/InterruptIO}
 		\end{minipage}
+		
 		\item \textbf{Direct memory access} (You have an answering machine)
 		\begin{myitemize}
 			\item \textbf{Driver (CPU) operation to input sequence of bytes:}
@@ -356,6 +359,22 @@
 
 \end{method}
 
+\begin{remark}{\textbf{Why interrupts have overheads?}}
+	Overheads involved include detecting the interrupt, consulting the vector table to get the interrupt handler address, pushing the current PC to the stack, switching to kernel mode, and vectoring to the interrupt handler and switching back to user mode.
+\end{remark}
+
+\begin{example}{\textbf{Compare different I/O Programming methods}}
+
+	\textbf{Question}: Printing 250 characters, how many cycles are wasted on polling?
+	
+	\textbf{Assumption}: Assuming the printer is currently free, (polling) time for the first character should be negligible. Almost all CPUs can execute at least 1 instruction per cycle
+	
+	\begin{myitemize}
+		\item \textbf{Polling}: For subsequent 249 characters, there is a 10ms poll time between characters. Each clock cycle is 10ns, so this corresponds to approximately 1,000,000 clock cycles per poll, or total of about 249,000,000 cycles to print the entire 250 characters.
+		\item \textbf{Interrupt Driven}: For subsequent 249 characters we have total 300ns interrupt time, = 74,700 ns. Each clock cycle is 10ns, so this is equal to 7,470 clock cyles, a great reduction from the original 249,000,000 cycles.
+		\item \textbf{DMA}: Total time taken = setup time + end of transfer interrupt processing time = 700ns. This is equal to 70 instructions.
+	\end{myitemize}
+\end{example}
 
 
 
