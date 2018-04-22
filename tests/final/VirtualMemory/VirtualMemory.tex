@@ -219,9 +219,10 @@
 		\end{myitemize}
 		\item \textbf{LRU - Least Recently Used}
 		\begin{myitemize}
-			\item Each page table entry (PTE) has an p-bit counter $c_i$. At each access to page i, the $c_i$ is set to $2^p$. Counter for all other pages is decremented by 1.
+			\item Each page table entry (PTE) has an p-bit counter $c_i$. At each access to page i, the $c_i$ is set to $2^p-1$. Counter for all other pages is decremented by 1.
 			\item When it is time to replace a page: Perform a search through page table to find smallest $c_i$. Swap that page back to disk.
 			\item If $>1$ page has smallest $c_i$, choose the first one we encountered.
+			\item \textbf{Note}: only approximation version of LRU as the counting range (p bit) cannot be too big.
 		\end{myitemize}
 		\end{myitemize}
 		\item \textbf{Rewriting pages back to disk}: Pages are large. Writing swapped out pages back to disk is expensive. Have a ``D'' (Dirty) bit in each PTE. \textbf{Note}: requires hardware support to update D.
