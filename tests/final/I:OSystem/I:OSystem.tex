@@ -376,6 +376,58 @@
 	\end{myitemize}
 \end{example}
 
+\begin{example}{\textbf{Disk access time calculation}}
+	\begin{myitemize}
+		\item \textbf{What is the total number of blocks read by this program?}
+		
+		Bytes per block =128; Total number of bytes read and written (calculated from the program) = 32768; Number of blocks to be read is $\frac{32768}{128}=256$. Assuming one directory block read and one inode block read per file, then total = 256 + 2 = 258.
+		
+		\item \textbf{Assume that there is no caching or buffering (so not affected by the caching policies), and that the disk blocks are *not skewed*. What is the total time in milliseconds that this program spends reading and writing the files?}
+		\begin{myitemize}
+			\item \textbf{Calculation of \# of cylinders to read}
+
+			\# of tracks per cylinder = 4; \# of blocks per cylinder = 16 $\times$ 4= 64; 
+			
+			\textbf{\# of cylinders to read = 256 / 64 = 4} (for the file itself)
+			
+			\item \textbf{Time to read directory and inode}
+			
+			Seek time to directory block: 12ms
+		
+			Rotational delay to directory block: 3600rpm=60rps. Delay=1/(2$\times$60)=8.3ms
+			
+			Transfer delay (to read directory / inode Block): 128 / 100,000,000=0.00128ms
+			
+			Total: (12+8.3+0.00128)$\times$2=40.6ms
+			\item \textbf{Time to read first cylinder}
+			
+			Seek time to first cylinder: 12ms
+			
+			Rotational delay to first block: 8.3ms
+			
+			Bytes per cylinder = 64 $\times$ 128 = 8192
+			
+			Time to read one cylinder = 8192 / 100,000,000=0.08192ms
+			
+			Total: (12+8.3+0.08192)=20.382ms
+			
+			\item \textbf{Time to read the remaining 3 cylinders}
+			
+			Seek time to adjacent track: 2ms
+			
+			Rotation delay still 8.3ms; Total time to read data still: 0.08192ms
+			
+			Total: $3\times (2+8.3+0.08192)\times 3 = 31.146$ms
+		\end{myitemize}
+		
+		\textbf{Total time taken}: 40.6+20.382+31.146=92.128ms
+		
+		\item \textbf{Once again assuming that there is no caching or buffering, repeat part b. assuming that the blocks are *skewed* such that rotational delay is completely eliminated when the head moves to the next cylinder to continue writing.}
+		
+		Same timing, except no rotational delay for additional 3 cylinders. $92.128 - 3\times8.3 = 67.228 $ms
+	\end{myitemize}
+\end{example}
+
 
 
 % $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %

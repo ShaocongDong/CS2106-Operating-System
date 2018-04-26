@@ -339,6 +339,14 @@ Memory is divided up into fixed sized chunks called \textbf{``allocation units''
 	
 \end{example}
 
+\begin{remark}{\textbf{Trade offs of using allocation units of multiple bytes versus allocation units of 1 byte}} (particularly in systems with large amounts of memory.)
+
+	\begin{myitemize}
+		\item Bigger allocation units = faster and more efficient allocation because fewer units to maintain, but bigger internal fragmentation.
+		\item Single byte units = no internal fragmentation, but can be slow and unwieldy to manage.
+	\end{myitemize}
+	
+\end{remark}
 
 
 
