@@ -142,7 +142,7 @@
 \end{tcolorbox}
 
 \begin{definition}{\textbf{Micro-coding}}
-	CPU designers implement a set of basic operations directly in hardware, then create a ''microcode'' – a language – that uses these operations to create complex machine instructions. (\textbf{Reason}: some instructions are too complex to do properly in hardware (e.g. the Intel string and block operations).)
+	CPU designers implement a set of basic operations directly in hardware, then create a ''microcode'' – a language – that uses these operations to create complex machine instructions. (\textbf{Reason}: some instructions are too complex to do properly in hardware. Microcode on a CPU can let us write more compact code for the same equivalent program, than on a CPU without microcode. One assembly instruction can be made up of multiple micro instructions.)
 \end{definition}
 
 
@@ -497,6 +497,7 @@ Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
 		\begin{myitemize}
 			\item This maintains information about whether the previous instruction resulted in an overflow or a ''zero'', whether interrupts are enabled, etc.
 			\item This is needed for branch instructions – assembly equivalents of ''if'' statements.
+			\item \textbf{Note}: The OS maintains information about CPU register contents, execution status, stack pointer information and program counter information but \textbf{doesn't include} contents of variables used by the process (kept in memory)
 		\end{myitemize}
 	\end{myitemize}
 \end{definition}
