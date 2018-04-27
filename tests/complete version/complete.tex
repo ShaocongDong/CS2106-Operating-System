@@ -1,0 +1,2448 @@
+\documentclass[11pt,a4paper]{article}
+
+% package importing
+%\usepackage[margin=2cm]{geometry}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ %total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ right=20mm,
+ bottom=20mm,
+ }
+ 		%$$$$$$ fonts settings $$$$$$%
+%\usepackage[sc]{mathpazo}  %for palatino font
+%\usepackage{eulervm}  %for Euler maths font
+
+		%$$$$$$ package imports $$$$$$%
+\usepackage{amsmath}  %for mathematics
+\usepackage{titlesec}  %for title spacing only
+\usepackage{lipsum}  %random huge text generation
+\usepackage{titlesec} %for changing font of titles 
+\usepackage{amssymb}  %for real number set symbol
+\usepackage{amsthm}  %for mathematics package
+\usepackage{mathtools}  %for floor and ceiling
+\usepackage{algorithmicx}  %for dynamic algorithm
+\usepackage{algorithm}  %algorithm micro
+\usepackage{algpseudocode}  %pseudocode commands
+\usepackage{wrapfig}  %for wrapping figures around text
+\usepackage{multicol}  %for multiple columns floats
+\usepackage{enumitem}  %for enumerate numbering
+\usepackage{url}   %for writing the url
+\usepackage{color}  %for colorred text
+\usepackage{tcolorbox}  %for colour box highlighting
+\usepackage{listings}  %for code listing
+
+% $$$$$$$$$ new command and theorems self-defined
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem*{remark}{Remark}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+\newtheorem{notation}{Notation}[section]
+\newtheorem{algoalgorithm}{Algorithm}[section]
+\newtheorem{method}{Method}[section]
+
+% $$$$$$$$ set general info $$$$$$$
+\title{\textsl{National University of Singapore} \\ \textbf{CS2106 Operating System}\\ Midterm Summary Notes}
+\author{\textit{Dong Shaocong} A0148008J}
+
+% $$$$$$$$ package parameter setting $$$$$$$$$
+
+% for title spacing {left}{before}{after}  ----------------------------
+\titlespacing\section{0.5pt}{10pt plus 2pt minus 2pt}{2pt plus 2pt minus 1pt}
+\titlespacing\subsection{0.5pt}{10pt plus 2pt minus 2pt}{2pt plus 2pt minus 1pt}
+\titlespacing\subsubsection{0.5pt}{10pt plus 2pt minus 2pt}{2pt plus 2pt minus 1pt}
+
+% for title font specifications  ------------------------------------------
+\titleformat{\section}
+  {\normalfont\fontsize{17}{17}\bfseries}
+  {\thesection}{1em}{}
+  
+\titleformat{\subsection}
+  {\normalfont\fontsize{15}{15}\bfseries}{\thesection}{1em}{}
+  
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{13}{13}\bfseries}{\thesection}{1em}{}
+
+% declare floor and ceiling functions   ------------------------------------------
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+% set the numbering of enumerate to numbers------------------------------------------
+\setlist[enumerate]{label*=\arabic*.}
+%\setlist{nolistsep}
+\newenvironment{myitemize}
+{ \begin{itemize}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}     }
+{ \end{itemize}                  } 
+\newenvironment{myenumerate}
+{ \begin{enumerate}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{0pt}
+    \setlength{\parsep}{0pt}     }
+{ \end{enumerate}                } 
+
+% $$$$$$$$$ math symbols cheatsheet
+% Caligraphic letters: $\mathcal{A}$ 
+% Mathbb letters: $\mathbb{A}$
+% Mathfrak letters: $\mathfrak{A}$ 
+% Math Sans serif letters: $\mathsf{A}$ 
+% $$$$$ color text commands ------------
+\newcommand{\redtt}[1]{{\color{red}\texttt{#1}}}
+\newcommand{\bluett}[1]{{\color{blue}\texttt{#1}}}
+\newcommand{\browntt}[1]{{\color{brown}\texttt{#1}}}
+\newcommand{\bluebf}[1]{{\color{blue} \huge \textbf{#1}}}
+\renewcommand{\emph}[2]{\redtt{#1} \bluebf{#2}}
+%-------------------------------------------------------
+
+% $$$$$$$$ start of documents $$$$$$$$$
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\newpage
+\section{Basic Idea}
+\begin{definition}{\textbf{Operating System}}
+	is a suite (i.e. a collection) of specialised software that:
+	\begin{myitemize}
+		\item Gives you access to the hardware devices like disk drives, printers, keyboards and monitors.
+		\item Controls and allocates system resources like memory and processor time.
+		\item Gives you the tools to customise and tune your system.
+	\end{myitemize}
+\end{definition}
+\begin{example}
+	LINUX, OS X (or MAC OS, a variant of UNIX), Windows 8
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{What are Operating System?} It usually consists of several parts. (\textsf{Onion Model})
+	
+	\begin{myitemize}
+		\item \textbf{Bootloader} – First program run by the system on start-up. Loads remainder of the OS kernel. 
+		\begin{myitemize}
+			\item On Wintel systems this is found in the Master Boot Record (MBR) on the hard disk.
+		\end{myitemize}
+		\item \textbf{Kernel} – The part of the OS that runs almost continuously. 
+		\item \textbf{System Programs} – Programs provided by the OS to allow:
+		\begin{myitemize}
+		\item Access to programs.
+		\item Configuration of the OS.
+		\item System maintenance, etc.
+		\end{myitemize}
+	\end{myitemize}
+		\includegraphics[scale=0.5]{m1/onionModel}
+		\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Micro-coding}}
+	CPU designers implement a set of basic operations directly in hardware, then create a ''microcode'' – a language – that uses these operations to create complex machine instructions. (\textbf{Reason}: some instructions are too complex to do properly in hardware. Microcode on a CPU can let us write more compact code for the same equivalent program, than on a CPU without microcode. One assembly instruction can be made up of multiple micro instructions.)
+\end{definition}
+
+
+
+\begin{tcolorbox}
+	\textsf{Abstraction Layer \& Opearating System Structure}
+	
+	\includegraphics[scale=0.25]{m1/operatingSystemStructure}
+		\centering
+	\includegraphics[scale=0.35]{m1/abstractionLayerDescription}
+		\centering
+\end{tcolorbox}
+
+\begin{remark}
+	System calls are provided by OS, and libraries calls are provided individual languages. Some library calls wrap around one or more system calls to provide the functionality to user program.
+\end{remark}
+
+\begin{definition}{\textbf{Boostrapping}}
+	\begin{myitemize}
+	\item The \textbf{OS is not present in memory} when a system is “cold started”.
+	\begin{myitemize}
+		\item When a system is first started up, memory is completely empty.
+	\end{myitemize}
+	\item We start first with a \textbf{bootloader} to get an operating system into memory.
+	\begin{myitemize}
+	\item Tiny program in the first (few) sector(s) of the hard-disk.
+	\item The first sector is generally called the “boot sector” or “master boot record” for this reason.
+	\item Job is to load up the main part of the operating system and start it up.
+	\end{myitemize}
+	\item bootstrap routine in boot sector loads up core disk services, and use this to load up memory and process management routines, and use that to load up services like web servers, ssh servers, etc, and finally load up the shell.
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Core}}
+	CPU units that can execute processes, because we have much more number of processes than the number of cores, we have to do \textbf{context switching} to share a core very quickly between different processes.
+	\begin{myitemize}
+		\item Entire sharing must be transparent.
+		\item Processes can be suspended and resumed arbitrarily.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Context switching}}
+	\begin{myenumerate}
+		\item Save the \textsf{context} of the process to be suspended.
+		\item Restore the \textsf{context} of the process to be (re)started.
+		\item Issues of \textsf{scheduling} to decide which process to run.
+	\end{myenumerate}
+\end{definition}
+
+\begin{definition}{\textbf{special register} Machine Status Word (MSW) or Status Register (SREG)}
+\begin{figure}[!h]
+	\includegraphics[scale=0.2]{m1/machineStatusWord}
+	\centering
+\end{figure}
+
+	We can see that it contains flags that tell us the results of a previous arithmetic operation. E.g. Zero (ZF) tells us if a subtract resulted in a 0, Sign (SF) tells us if it resulted in a negative number. The Carry flag (CF) tells us if an addition resulted in a carry, the Overflow flag (OF) tells us if an overflow resulted (which means the results could be invalid), etc.
+	
+	The ZF and SF are necessary for branch instructions. E.g. for a branch on less than (BLT), the ALU performs a subtraction, and the branch is taken if SF is set. Similarly for a BEQ, the branch is taken if ZF is set, etc.
+	
+	The MSW also contains configuration flags, like the Interrupt Enable (IF) flag that enables or disables maskable interrupts (special signals that I/O hardware can use to get the CPU's attention – essentially this flag tells the CPU whether to entertain or ignore such requests).
+	
+	For correctness, MSW has to be stored during context save and restored during context restore.
+\end{definition}
+
+\begin{definition}{\textbf{File system}}
+	A set of data structures on disk and within the OS kernel memory to organise persistent data.
+\end{definition}
+
+\begin{tcolorbox}
+\textsf{How OS file system works?}
+
+	\includegraphics[scale=0.3]{m1/fileSystem}
+	\centering
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{Hardware Interfaces}
+	
+	\includegraphics[scale=0.3]{m1/hardwareDevice}
+	\centering
+	\includegraphics[scale=0.4]{m1/hardwareController}
+	\centering
+\end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between device drivers}}
+	\begin{myitemize}
+		\item \textbf{Block-oriented device management}: the \textbf{block devices} are usually storage devices that provide reading and writing operation of data in fixed-size blocks. Some \textbf{examples} of such devices are: hard drives, floppy disks, and optical drives such as DVD-ROM, and CD-ROM. \textbf{Advantage}: fewer pins to access data.
+		\item \textbf{Stream-oriented device management}: \textbf{character (Stream) devices} are allowed to use \textbf{few bytes} in its operations. Also buffering is not required for such devices, and as such; the response time and the processing speed is faster than the block devices. \textbf{examples}: console, mouse, and all devices that are neither storage nor network devices. \textbf{Advantage}: I/O can be done directly between the device and the user and as such; the kernel is saved from copying operation and the overhead of buffering mechanisms.
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{Memory}}
+	static/dynamic (\textsf{new, delete, malloc, free}). Memory to store instructions
+Memory to store data.
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Memory Management}
+	
+	\includegraphics[scale=0.3]{m1/memoryManagement}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Virtual Memory management}}
+\begin{myitemize}
+	\item For cost/speed reasons memory is organized in a hierarchy:
+	\begin{figure}[h!]
+		\includegraphics[scale=0.6]{m1/memoryHirarchy}
+		\centering
+	\end{figure}
+	\item The lowest level is called ''virtual memory'' and is the slowest but cheapest memory.
+	\begin{myitemize}
+	\item Actually made using hard-disk space!
+	\item Allows us to fit much more instructions and data than memory allows!
+	\end{myitemize}
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{OS security}}
+	\begin{myitemize}
+		\item Data (files): Encryption techniques, Access control lists
+		\item Resources: Access to the hardware (biometric, passwords, etc), Memory access, File access, etc.
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Writing an OS (BSD Unix)}
+	
+	\includegraphics[scale=0.3]{m1/writingOS}
+	\centering
+\end{tcolorbox}
+
+\begin{example}{\textbf{Privilege Levels}  used in Intel CPUs}
+	
+	This diagram is useful to understand privilege rings:
+	
+	\begin{figure}[!h]
+		\includegraphics[scale=0.2]{m1/privilegeRing}
+		\centering
+	\end{figure}
+	
+	processes running in lower (outer) rings have more restrictive access to the machine than processes in the higher (inner) rings, to prevent a user, for example, from erasing the entire system drive.
+	
+	\begin{tcolorbox}
+		\textsf{why the highest priority task can still be interrupted by the lowest priority interrupt}, and how this affects ISR design. (Hint: Interrupts are implemented in hardware in the CPU itself).
+		
+		This is because task priorities are seen only by the OS. As far as the CPU is concern, it is “just another program” that is running, with instructions being fetched and executed. On the other hand interrupt lines are checked at the end of each instruction execution cycle, so interrupts are always serviced regardless of their priority level (and of the priority level of the running task).
+	\end{tcolorbox}
+\end{example}
+
+\begin{definition}{\textbf{Kernel}}
+	\begin{myitemize}
+		\item \textsf{Monolithic Kernel} (Linux, MS Windows)
+		\begin{myitemize}
+			\item All major parts of the OS-devices drivers, file systems, IPC, etc, running in ''kernel space'' (an elevated execution mode where certain privileged operations are allowed).
+			\item Bits and pieces of the kernel can be loaded and unloaded at runtime (e.g. using ''modprobe'' in Linux)
+			\begin{figure}[h!]
+				\includegraphics[scale=0.35]{m1/monolithicKernels}
+				\centering
+			\end{figure}
+		\end{myitemize}
+		\item \textsf{MicroKernel} (Mac OS)
+		\begin{myitemize}
+			\item Only the ''main'' part of the kernel is in ''kernel space'' (Contains the important stuff like the scheduler, process management, memory management, etc.)
+			\item The other parts of the kernel operate in ''user space'' as system services: The file systems, USB device drivers, Other device drivers.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{External View of an OS}
+	\begin{myitemize}
+		\item The kernel itself is not very useful. (Provides key functionality, but need a way to access all this functionality.)
+		\item We need other components:
+		\begin{myitemize}
+			\item System libraries (e.g. stdio, unistd, etc.)
+			\item System services (creat, read, write, ioctl, sbrk, etc.)
+			\item OS Configuration (task manager, setup, etc.)
+			\item System programs (Xcode, vim, etc.)
+			\item Shells (bash, X-Win, Windows GUI, etc.)
+			\item Admin tools (User management, disk optimization, etc.)
+			\item User applications (Word, Chrome, etc).
+		\end{myitemize}
+	\end{myitemize}
+	
+\end{tcolorbox}
+
+\begin{definition}{\textbf{System Calls}}
+	are calls made to the “Application Program Interface” or API of the OS.
+	\begin{myitemize}
+		\item UNIX  and similar OS mostly follow the POSIX standard. (Based on C. Programs become more portable.) \textit{POSIX: portable operating system interface for UNIX, minimal set of system calls for application portability between variants of UNIX}.
+		\item Windows follows the WinAPI standard. (Windows 7 and earlier provide Win32/Win64, based on C.
+Windows 8 provide Win32/Win64 (based on C) and WinRT (based on C++).)
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{\textbf{User mode + Kernel mode}}
+	\begin{myitemize}
+		\item Programs (process) run in user mode.
+		\item During system calls, running kernel code in kernel mode.
+		\item After system call, back to user mode.
+	\end{myitemize}
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{How to switch mode?} Use privilege mode to switching instructions:
+	\begin{myitemize}
+		\item syscall instruction
+		\item software interrupt - instruction which raises specific interrupt from software.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between User Thread and Kernel Thread}}
+	\begin{myitemize}
+		\item \textbf{User threads} are implemented by users. OS doesn’t recognised user level threads. Context switch time is less. Context switch requires no hardware support. If one user level thread perform blocking operation then entire process will be blocked. (e.g., Java thread, POSIX threads.)
+		\item \textbf{kernel threads} are implemented and recognised by OS. Implementation of Kernel thread is complicated. Context switch time is more and hardware support is needed. If one kernel thread perform blocking operation then another thread can continue execution. it is the \textbf{number of kernel threads} that determine the CPU received. (visible and schedulable by the OS, e.g., events/n, pdflush)
+	\end{myitemize}
+\end{remark}
+
+\begin{example}{\textbf{LINUX system call}}
+	\begin{myenumerate}
+		\item User mode: (outside kernel)
+		\begin{myenumerate}
+			\item C function wrapper (eg. \textbf{getpid()}) for every system call in C library.
+			\item assembler code to setup the system call no, arguments
+			\item trap to kernel	
+		\end{myenumerate}
+		\item Kernel mode: (inside kernel)
+		\begin{myenumerate}
+			\item dispatch to correct routine
+			\item check arguments for errors (eg. invalid argument, invalid address, security violation)
+			\item do requested service
+			\item return from kernel trap to user mode
+		\end{myenumerate}
+		\item User mode: (Outside kernel)
+		\begin{myenumerate}
+			\item returns to C wrapper - check for error return values
+		\end{myenumerate}
+	\end{myenumerate}
+\end{example}
+
+\begin{example}{\textbf{UNIX signal}: SIGTERM or SIGKILL}
+	\begin{myitemize}
+		\item SIGTERM (triggered using \textsf{kill $<$process id$>$}):
+		\begin{myitemize}
+			\item The OS receives the SIGTERM request and passes it to the process.
+			\item The process receives this signal and can clean up and release resources it is using.
+			\item If the process has child processes, it will terminate the child processes also using a SIGTERM.
+			\item The process exits gracefully.
+		\end{myitemize}
+		\item SIGKILL (triggered using \textsf{kill $-$9 $<$process id$>$}):
+		\begin{myitemize}
+			\item Process is terminated immediately by init (the UNIX master process). SIGKILL is not passed to the process, and the process does not have any chance to do cleaning up.
+			\item SIGKILL can create zombie processes particularly if the killed process has children.
+		\end{myitemize}
+	\end{myitemize}
+\end{example}
+
+\section{Process Management}
+\begin{definition}{\textbf{Program}}
+	consists of: Machine instructions (and possibly source code) and Data. A program exists as a file on the disk. (e.g. command.exe, MSword.exe)
+\end{definition}
+
+\begin{definition}{\textbf{Process}}
+	consists of Machine instructions (and possibly source code), Data and Context. It exists as instructions and data in memory, \textbf{may} be executing on the CPU.
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Program} vs. \textsf{Process}
+	
+	A single program can produce multiple processes. (e.g. chrome.exe is a single program, but every tab in Chrome is a new process!)
+
+\end{tcolorbox}
+
+\begin{remark}{\textbf{Comparison between foreground process and background process}}
+	\begin{myitemize}
+		\item \textbf{Foreground Process}: any command or task you run directly and wait for it to complete. Some foreground processes show some type of user interface that supports ongoing user interaction, whereas others execute a task and ''freeze'' the computer while it completes that task.
+		
+		\textbf{Shell command}: \textsf{\$ command1}
+		\item \textbf{Background Process}: the shell does not have to wait for a background process to end before it can run more processes. Within the limit of the amount of memory available, you can enter many background commands one after another. Background jobs are run at a lower priority to the foreground jobs. You will see a message on the screen when a background process is finished running.
+		
+		\textbf{Shell command}: \textsf{\$ command1 \&}
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{Execution Modes}}
+	\begin{myitemize}
+		\item Programs usually run sequentially. (Each instruction is executed one after the other.)
+		\item Having multiple cores or CPUs allow parallel (''concurrent'') execution. (Streams of instructions with no dependencies are allowed to execute together.)
+		\item A multitasking OS allows several programs to run ''concurrently''. (Interleaving, or “time-slicing”)
+	\end{myitemize}
+\end{definition}
+
+\begin{remark}
+	we mostly assume number of processes $\geq$ number of CPU otherwise can have idle CPU core. So each core must still switch between processes even for multi-cores, and we will assume a single processor with a single core.
+\end{remark}
+
+\begin{tcolorbox}
+	\textsf{The Process Model}
+	
+	\includegraphics[scale=0.5]{m1/processModel}
+	\centering
+	
+	\begin{myitemize}
+		\item Figure (b) shows what “appears” to be happening in a single processor system running multiple processes:
+		\begin{myitemize}
+			\item There are 4 processes each with its own program counter (PC) and registers.
+			\item All 4 processes run independently of each other at the same time.
+		\end{myitemize}
+		\item Figure (a) shows what actually happens.
+		\begin{myitemize}
+			\item There is only a single PC and a single set of registers.
+			\item When one process ends, there is a ''context switch'' or ''process switch'':
+			\begin{myitemize}
+				\item PC, all registers and other process data for Process A is copied to memory.
+				\item PC, register and process data for Process B is loaded and B starts executing, etc.
+			\end{myitemize}
+		\end{myitemize}
+		\item Figure (c) illustrates how processes A to D share CPU time.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Process States}} there are three possible states for a process
+	\begin{myitemize}
+		\item Running 
+		\begin{myitemize}
+			\item The process is actually being executed on the CPU.
+		\end{myitemize}
+		\item Ready 
+		\begin{myitemize}
+			\item The process is ready to run but not currently running. 
+			\item A ''scheduling algorithm'' is used to pick the next process for running.
+		\end{myitemize}
+		\item Blocked.
+		\begin{myitemize}
+			\item The process is waiting for ''something'' to happen so it is not ready to run yet. e.g. include waiting for inputs from another process.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{figure}[h!]
+	\includegraphics[scale=0.3]{m1/processStates}
+	\includegraphics[scale=0.3]{m1/processStates2}
+	\centering
+\end{figure}
+
+\begin{definition}{\textbf{Process Context}} (values change as a process runs)
+	\begin{myitemize}
+		\item CPU register values. 
+		\item Stack pointers.
+		\item CPU Status Word Register
+		\begin{myitemize}
+			\item This maintains information about whether the previous instruction resulted in an overflow or a ''zero'', whether interrupts are enabled, etc.
+			\item This is needed for branch instructions – assembly equivalents of ''if'' statements.
+			\item \textbf{Note}: The OS maintains information about CPU register contents, execution status, stack pointer information and program counter information but \textbf{doesn't include} contents of variables used by the process (kept in memory)
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{figure}[h!]
+	\includegraphics[scale=0.6]{m1/statusRegister}
+	\centering
+\end{figure}
+
+\begin{tcolorbox}
+	\textsf{What other pieces of information does the OS need to save about a process?}
+	
+	\begin{myitemize}
+		\item \textbf{File handles / Open File Table}: These are data structures that maintain information about files that are opened by the process, like the location that a process is inside the file, access rights to the file, file open modes, etc.
+		\item \textbf{Pending signals}: A “signal” is an OS message to the process.
+		\item \textbf{Process Running State}: Whether the process is suspending, ready, running, terminated, etc.
+		\item \textbf{Accounting Information}: How much CPU time the process has used, how much disk space, network activity, etc.
+		\item \textbf{Process ID}: Unique number identifying the process. Etc.
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{example}{\textbf{Context Switching in FreeRTOS Atmega Port}}
+	FreeRTOS relies on regular interrupts from Timer 0 to switch between tasks. When the interrupt triggers:
+	\begin{myenumerate}
+		\item PC is placed onto Task A's stack.
+		\item The ISR calls \textsf{portSAVECONTEXT}, resulting in Task A’s context being pushed onto the stack.
+		\item \textsf{pxCurrentTCB} will also hold SPH/SPL after the context save.
+		\begin{myitemize}
+			\item This must be saved by the kernel.
+			\item The kernel stores a copy of the stack pointer for each task.
+		\end{myitemize}
+		\item The kernel then selects Task B to run, and copies its SPH/SPL values into \textsf{pxCurrentTCB} and calls \textsf{portRESTORE\_CONTEXT}.
+		\item The rest of \textsf{portRESTORE\_CONTEXT} is executed, causing Task B’s data to be loaded into R31-R0 and SREG. Now Task B can resume like as though nothing happened
+		\item Only Task B's PC remains on the stack. Now the ISR exits, causing this value to be popped off onto the AVR's PC.
+		\begin{myitemize}
+			\item PC points to the next instruction to be executed. 
+			\item End result: Task B resumes execution, with all its data and SREG intact!
+		\end{myitemize}
+	\end{myenumerate}
+\end{example}
+
+\begin{tcolorbox}
+	\textsf{How can context switching be triggered?}
+	
+	It can be triggered by a timer; currently running process waiting for input; currently running task blocking on a synchronisation mechanism; currently running task wants to sleep for a fixed period; higher priority task becoming “READY”; $\dots$
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Process Control Block}}
+	maintains information about that process: Process ID (PID), Stack Pointer, Open files, Pending signals, CPU usage, $\dots$
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Process Life Cycle}
+	
+	\includegraphics[scale=0.3]{m1/processLifeCycle}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Creating a new process - \textsf{fork()}}}
+	\begin{myitemize}
+		\item Fork system call creates a new process by duplicating the current image into a new process, \textit{child process}
+		\item \textsf{same code} (executable image) is executed
+		\item Child differs only in process id (PID) and parent (PPID), fork return value
+		\item Data in child is a COPY of the parent (i.e. not shared) $\rightarrow$ unique only to fork
+		\item In PARENT process after fork:
+		\begin{myitemize}
+			\item PC is at return from fork system call
+			\item fork return value: new child PID
+		\end{myitemize}
+		\item In CHILD process after fork:
+		\begin{myitemize}
+			\item PC is at return from fork system call
+			\item fork return value: 0
+			\item Shares open file \& signal handlers with parent, current working directory
+			\item Independent copy of: memory, arguments, environment variables (note: cloning example)
+		\end{myitemize}
+		\item fork return result is -1 if the fork failed.
+		\item \textsf{for(int i=0; i$<$10; i++) fork();}, this for general case n, there are $2^n$ processes created including the original process. 
+		\begin{figure}[!h]
+			\includegraphics[scale=0.3]{m1/forkBomb}
+			\centering
+		\end{figure}
+		\item \textbf{Fork bomb}: is a denial-of-service attack wherein a process \textbf{continually replicates} itself to deplete available system resources, slowing down or crashing the system due to resource starvation.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Waiting for child process - \textsf{pid\_t wait(int *stat\_loc)}}}
+	\begin{myitemize}
+		\item If any process has more than one child processes, then after calling \textsf{wait()}, parent process has to be in wait state if no child terminates.
+		\item If only one child process is terminated, then \textsf{wait()} returns process ID of the terminated child process.
+		\item If more than one child processes are terminated than \textsf{wait()} reap any \textbf{arbitrarily} child and return a process ID of that child process.
+		\item When \textsf{wait()} returns they also define \textbf{exit status} (which tells our, a process why terminated) via pointer, If status are not \textbf{NULL}.
+		\item If any process has no child process then \textsf{wait()} returns immediately ''-1''.
+		\item Calling \textsf{while(wait(NULL)$>$0);} means wait until all child processes exit (or change state) and no more child processes are unwaited-for (or until an error occurs)
+		\item Calling \textsf{wait(NULL)} will block parent process until any of its children has finished. If child terminates before parent process reaches \textsf{wait(NULL)} then the child process turns to a \textbf{zombie} process until its parent waits on it and its released from memory.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{replaces the current process image with a new process image - \textsf{execl()}}}
+	
+\end{definition}
+
+\begin{definition}{\textbf{The Master Process}}
+	\begin{myitemize}
+		\item Every process has parent: \textsf{where does it stop?}
+		\item Special initial process - \textsf{init} process created in kernel at the end UNIX boot process, traditionally having PID=1.
+		\item Forking creates process tree, \textsf{init} is the root process.
+		\item \textsf{init} watches for processes and response where needed, e.g. terminal login.
+		\item \textsf{init} also manages system run levels (e.g. shutdown, power failure, single-user mode), etc. Example of a system-like process running in kernel mode.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{The Zombie Process}}
+	or \textbf{defunct process} is a process that has completed execution (via the \textsf{exit} system call) but still has an entry in the process table: it is a process in the \textbf{Terminated state}. This occurs for child processes, where the entry is still needed to allow the parent process to read its child's \textsf{exit} status: once the \textsf{exit} status is read via the wait system call, the zombie's entry is removed from the process table and it is said to be \textbf{''reaped''}. 
+	
+	A child process always first becomes a zombie before being removed from the resource table. In most cases, under normal system operation zombies are immediately waited on by their parent and then reaped by the system – processes that stay zombies for a long time are generally an error and cause a resource leak.
+	
+	Zombie process retains PID and stores termination status and result at its PCB table.
+\end{definition}
+
+\begin{definition}{\textbf{The Orphan Process}}
+	is a computer process whose parent process has finished or terminated, though it remains running itself. (this means it's still in \textbf{Running state})
+\end{definition}
+
+\begin{definition}{\textbf{Start/Stop a Process}}
+	\begin{myitemize}
+		\item kill() system call sends signal to process
+		\item Special process signals:
+		\begin{myitemize}
+			\item stopping process (SIGSTOP)
+			\item killing process (SIGKILL)
+			\item restart stopped process (SIGCONT)
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Terminating a process}
+	
+	\includegraphics[scale=0.27]{m1/terminatingProcess1}
+	\includegraphics[scale=0.27]{m1/terminatingProcess2}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Normal Program Termination} - \textsf{void exit(int status)} from standard C library function}
+	\begin{myitemize}
+		\item Usually don't use \textsf{\_exit()} but \textsf{exit()}, which cleans up: open streams from C stdio library (e.g., \textsf{fopen}, \textsf{printf}) are flushed and closed
+		\item calls some \textsf{exit} handlers
+		\item finally calls \textsf{\_exit(status)} after all standard C cleanup done.
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	returning from \textsf{main()} implicitly calls \textsf{exit}. \textsf{exec} didn't actually call main directly but a startup routine. Open files also get flushed automatically.
+\end{remark}
+
+\begin{tcolorbox}
+	\textsf{Waiting for Child Processes to Terminate - process interaction}
+	
+	\includegraphics[scale=0.27]{m1/parentWait1}
+	\includegraphics[scale=0.27]{m1/parentWait2}
+	\centering
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{Zombie Process}
+	
+	\includegraphics[scale=0.27]{m1/zombieProcess1}
+	\includegraphics[scale=0.27]{m1/zombieProcess2}
+	\centering
+\end{tcolorbox}
+
+\section{Process Scheduling}
+
+\begin{definition}{\textbf{Computer jobs}}
+	Computatings + reading/writing memory + input/output.
+	\begin{myitemize}
+		\item CPU bound
+		\begin{myitemize}
+			\item Most of the time spent on processing on CPU
+			\item Graphics-intensive applications are considered to be ''CPU'' bound.
+			\item Multitasking opportunities come from having to wait for processing results.
+		\end{myitemize}
+		\item I/O bound
+		\begin{myitemize}
+			\item Most of the time is spent on communicating with I/O devices
+			\item Multitasking opportunities come from having to wait for data from I/O devices.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{tcolorbox}
+	\textsf{Process states - scheduler involvement}
+	
+	\includegraphics[scale=0.4]{m1/processSchedulerStates}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Types of Multitaskers}}
+	\begin{myitemize}
+		\item \textbf{Batch Processing} (Not actually multitasking since only one process runs at a time to completion.)
+		\item \textbf{Co-operative Multitasking} (Currently running processes cannot be suspended by the scheduler; Processes must volunteer to give up CPU time. Context switching is controlled entirely by processes themselves. Co-operative multitasking is simpler and less prone to concurrency issues, but should any process go into an infinite loop, it could potentially freeze up the system.)
+		\item \textbf{Pre-emptive Multitasking} (Currently running processes can be forcefully suspended by the scheduler. \textsf{Timer-triggered} multitasking.)
+		\item \textbf{Real-Time Multitasking} (Processes have fixed deadlines that must be met.)
+		\begin{myitemize}
+			\item \textbf{Hard} Real Time Systems: Disaster strikes! System fails, possibly catastrophically!
+			\item \textbf{Soft} Real Time Systems: Mostly just an inconvenience. Performance of system is degraded
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	Policies are determined by the kind of multitasking environment. Shorter time-quantum for timer interrupts $\rightarrow$ More responsive, scheduler runs more often $\rightarrow$ net loss of user CPU time.
+\end{remark}
+
+\begin{definition}{\textbf{responsiveness}}
+	of a scheduling algorithm refers to how soon can a newly created task receives its first share of CPU time.
+\end{definition}
+
+\begin{method}{\textbf{Scheduling Policies} - enforce a priority ordering over processes}
+	\begin{myitemize}
+		\item \textbf{Fixed Priority} for all kinds of multitaskers
+		\begin{myitemize}
+			\item Each task is assigned a priority by the programmer. (usually priority number 0 has the highest priority.)
+			\item Tasks are queued according to priority number.
+			\item Batch, Co-operative: Task with highest priority is picked to be run next.
+			\item Pre-emptive, Real-Time: When a higher priority task becomes ready, current task is suspended and higher priority task is run.
+		\end{myitemize}
+		\item Policies for \textbf{Batch Processing}
+		\begin{myitemize}
+			\item First-come First Served (\textsf{FCFS})
+			\begin{myitemize}
+				\item Arriving jobs are stored in a queue.
+				\item Jobs are removed in turn and run.
+				\item Particularly suited for batch systems.
+				\item Extension for interactive systems: Jobs removed for running are put back into the back of the queue. This is also known as “round-robin scheduling”.
+				\item Starvation free as long as earlier jobs are bounded.
+			\end{myitemize}
+			\item Shortest Job First (\textsf{SJF})
+			\begin{myitemize}
+				\item Processes are ordered by total CPU time used.
+				\item Jobs that run for less time will run first.
+				\item Reduces average waiting time if number of processes is fixed.
+				\item Potential for starvation.
+			\end{myitemize}
+		\end{myitemize}
+		\item Policies for \textbf{Co-operative Multitasking}
+		\begin{myitemize}
+			\item Round Robin with Voluntary Scheduling (\textsf{VS})
+			\item \textbf{Voluntary Scheduling}: Processes call a special “yield” function. This invokes the scheduler. Causes the process to be suspended and another process started up.
+		\end{myitemize}
+		\item Policies for \textbf{Pre-emptive multitasking}
+		\begin{myitemize}
+			\item Round Robin with Timer (\textsf{RR})
+			\begin{myitemize}
+				\item Each process is given a fixed time slot $c_i$.
+				\item After time $c_i$, scheduler is invoked and next task is selected on a round-robin basis.
+				\item Any process that has finished its run is blocked until the next time it is due to run again.
+				\item The process can be preempted in the middle of its run.
+				\item It simply cycles through the processes without caring about their deadlines, (unlike RMS and EDF which take into account deadlines), so we cannot guarantee that processes meet their deadlines in general.
+			\end{myitemize}
+			\item Shortest Remaining Time (\textsf{SRT})
+			\begin{myitemize}
+				\item Pre-emptive form of SJF.
+				\item Processes are ordered according to remaining CPU time left.
+			\end{myitemize}
+		\end{myitemize}
+		\item Policies for \textbf{Real-Time Multitaskers}
+		\begin{myitemize}
+			\item Rate Monotonic Scheduling (\textsf{RMS})
+			\begin{myitemize}
+				\item Processes are prioritized according to $P_i$, Shortest period = highest priority.
+				\item \textbf{Critical Instance Analysis} is used to test that all processes meet their deadlines
+				\item We can also write down the table to see and the pattern will repeat for every $LCM ( P_1, \dots, P_n )$.
+			\end{myitemize}
+			\item Earliest Deadline First Scheduling (\textsf{EDF})
+			\begin{myitemize}
+				\item Processes are prioritized according to who is closest to their respect deadlines.
+				\item All processes are guaranteed to meet their deadlines as long as: $U=\sum^n_{i=1}\dfrac{C_i}{T_i} \leq 1$
+				\item There is no context switching for processes, each process will run till the end if gets started.
+			\end{myitemize}
+		\end{myitemize}
+	\end{myitemize}
+\end{method}
+
+\begin{remark}{\textbf{Real Time Scheduling}}
+	must guarantee that processes complete within time limits.
+	
+	\begin{myitemize}
+		\item Time limits are called “deadlines”
+		\item Processes are assumed to be periodic with period $P_i$ for process i.
+		\item Processes are assumed to use a fixed amount of CPU time $C_i$ each time.
+		\item Deadline $D_i$ is assumed to be the same as period $P_i$. (if a process runs at time $T_i$, it must finish running by $D_i=T_i+P_i$, If it doesn’t, process has missed its deadline.) $T_i$ is the process or task arriving time.
+	\end{myitemize}
+\end{remark}
+
+\begin{method}{\textbf{Critical Instance Analysis for} \textsf{RMS}}
+	\begin{myenumerate}
+		\item Sort T by period of each task, if T is not already sorted. (We will assume that $T_1$ has the shortest period, $T_2$ has the $2^{nd}$ shortest, etc.)
+		\item For each task $T_i \in T$, recursively compute $S_{i0}, S_{i1}, \dots$ where:
+		\[ S_{i,0}=\sum^i_{j=1}C_j; S_{i,(x+1)}=C_i+\sum^{i-1}_{j=1}C_j\times \ceil{\frac{S_{i,x}}{P_j}} =\text{CPU time}+\text{ALL possible preemptions} \]
+		\item Stop when $S_{i,(x+1)}=S_{i,x}$. Call this $S_{i,(x+1)}$ the final value $S_{i,F}$ (termination value).
+		\item If $S_{i,F}<D_i (=T_i+P_i)$, then the task i is schedulable and will not miss its deadlines.
+	\end{myenumerate}
+\end{method}
+\begin{remark}{\textbf{Comparison between RMS and fixed priority policy on critical instance analysis}}
+
+	In \textbf{critical instance analysis}, the only things that are important are:
+	\begin{myenumerate}
+		\item The priority remains fixed in some way throughout the execution life of the processes. In RMS the priority remains fixed because we assume that $P_i$ is fixed. Here the priority is fixed by definition.
+		\item The period $P_i$ of each process is fixed so that each process is pre-empted by a higher priority processed in predictable ways.
+	\end{myenumerate}
+	
+	If these two conditions are met, then it doesn’t matter whether we are using a fixed priority policy or an RMS policy; If $S_{i, F} < D_i$ for all i, it means that for every process, the worst case execution time including all possible preemptions is still less than the deadline for each process, and thus all processes are guaranteed to meet their deadlines.
+	
+	This is important because it means that CIA can also be used for fixed priority systems as long as the two conditions hold.
+\end{remark}
+
+\begin{remark}{\textbf{Check for starvation free}}
+	is to check if a job can always get in front of another process.
+\end{remark}
+
+\begin{method}{\textbf{Managing Multiple Policies}}
+	Multiple policies can be implemented on the same machine using multiple queues:
+	\begin{myitemize}
+		\item Each queue can have its own policy.
+		\item This scheme is used in Linux.
+	\end{myitemize}
+\end{method}
+
+\begin{example}{\textbf{Scheduling in Linux}}
+	\begin{myitemize}
+		\item Processes in Linux are dynamic:
+		\begin{myitemize}
+			\item New processes can be created with \textsf{fork()}
+			\item Existing processes can exit.
+		\end{myitemize}
+		\item Priorities are also dynamic:
+		\begin{myitemize}
+			\item Users and superusers can change priorities using ''nice'' values.
+			\item \textsf{nice –n 19 tar cvzf archive.tgz *} (Allows tar to run with a priority lowered by 19 to reduce CPU load. Normal users can only $0\leq n \leq 19$. Superusers can specify $-20\leq n \leq 19$. Negative nice increases priority.)
+		\end{myitemize}
+		\item Linux maintains \textbf{three types of processes}:
+		\begin{myitemize}
+			\item \textbf{Real-time FIFO}: \textsf{RT-FIFO} processes cannot be pre-empted except by a higher priority \textsf{RT-FIFO} process.
+			\item \textbf{Real-time Round-Robin}: Like \textsf{RT-FIFO} but processes are pre-empted after a time slice.
+			\item Linux only has ''soft real-time'' scheduling. (Priority levels 0 to 99) Cannot guarantee deadlines, unlike \textsf{RMS} and \textsf{EDF}. 
+			\item Non-real time processes (Priority levels 100 to 139)
+		\end{myitemize}
+		\item Linux maintains 280 queues in two sets of 140: An active set, an expired set.
+		\item The scheduler is called at a rate of 1000 Hz. (e.g. time tick is 1 ms, called a ''jiffy''.) \textsf{RT-FIFO} processes are \textbf{always} run if any are available. Otherwise:
+		\begin{myitemize}
+			\item Scheduler picks highest priority process in active set to run.
+			\item When its “time quantum” is expired, it is moved to the expired set. Next highest priority process is picked.
+			\item When active set is empty, active and expired pointers are swapped. Active set becomes expired set and vice versa.
+			\item Scheme ensures no starvation of lowest priority processes.
+			\item Without the expired set, only tasks in the highest priority queue will get to run: Tasks finish their time quanta have to be placed ''somewhere'' to be run again, and since there’s no expired set, that ''somewhere'' is to the back of the queue. When these tasks reach the front again they will be run, starving all the other queues.
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{What happens if a process becomes blocked? (e.g. on I/O)}
+			
+			\begin{myitemize}
+				\item CPU time used so far is recorded. Process is moved to a queue of blocked processes.
+				\item When process becomes runnable again, it continues running until its time quantum is expired.
+				\item It is then moved to the expired set.
+				\item When a process becomes blocked its priority is often upgraded and given MORE CPU time to catch up.
+			\end{myitemize}
+		\end{tcolorbox}
+		\item Time quantums for RR processes: Varies by priority. For example: Priority level 100 - 800 ms, Priority level 139 - 5 ms, or System load.
+		\item How process priorities are calculated: Priority = base + f(nice) + g(cpu usage estimate)
+		\begin{myitemize}
+			\item $f(.) =$ priority adjustment from nice value.
+			\item $g(.) =$ Decay function. Processes that have already consumed a lot of CPU time are downgraded.
+			\item Other heuristics are used: Age of process, More priority for processes waiting for I/O - I/O boost, Bias towards foreground tasks.
+		\end{myitemize}
+		\item \textbf{I/O Boost}
+		\begin{myitemize}
+			\item Tasks doing read() has been waiting for a long time. May need quick response when ready.
+			\item Blocked/waiting processes have not run much.
+			\item Applies also to interactive processes – blocked on keyboard/mouse input.
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{How long does this boost last?}
+			\begin{myitemize}
+				\item Temporary boost for sporadic I/O
+				\item Permanent boost for the chronically I/O bound?
+				\item E.g. Linux gives -5 boost for interactive processes.
+				\item Implementation: We can boost time quantum, boost priority, do both.
+			\end{myitemize}
+		\end{tcolorbox}
+	\end{myitemize}
+\end{example}
+
+
+\section{Inter-Process Communication}
+\begin{definition}{\textbf{Race Condition}}
+	occur when two or more processes attempt to access shared storage. This causes the final outcome to depend on who runs first. ''Shared storage'' can mean:
+	\begin{myitemize}
+		\item Global variables.
+		\item Memory locations.
+		\item Hardware registers.- This refers to configuration registers rather than CPU registers.
+		\item Files.
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{\textbf{Race condition for two threads}}
+	
+	There maybe four possible cases for tow threads running concurrently:
+	\begin{myitemize}
+		\item Thread 1 runs to completion, $x=6$, Thread 2 runs to completion, $x = 12$.
+		\item Thread 2 runs to completion, $x = 10$, Thread 1 runs to completion, $x = 11$.
+		\item Thread 1 loads x and is pre-empted, Thread 2 loads x and writes back $5 \times 2 = 10$, Thread 1 increments x to 6 and writes it back.
+		\item Thread  2 loads x and is pre-empted, Thread 1 loads x, updates it to 6, writes back, Thread 2 gets $5 \times 2 = 10$
+	\end{myitemize}
+\end{example}
+
+\begin{definition}{\textbf{Correctness in multithreaded programs}}
+	depends on the intended sequence of execution.
+\end{definition}
+
+\begin{tcolorbox}
+
+\textsf{why we have wrong value?}
+	
+	It is either because the threads are executed in the wrong sequence, or because one thread gets pre-empted before it can save its results and the next thread gets a stale value. The first thread then overwrites the next thread’s results.
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Critical Sections} mutual exclusion - \textsf{mutex}}
+	
+	a RUNNING process is always in one of two possible ''states'':
+	\begin{myitemize}
+		\item It is performing local computation. This does not involve global storage, hence to race condition is possible.
+		\item It is reading/updating global variables. This can lead to race conditions. (it is within its ''critical section'')
+	\end{myitemize}
+\end{definition}
+
+\begin{theorem}{\textbf{FOUR rules to prevent race conditions}}
+	\begin{myenumerate}
+		\item No two processes can simultaneously be in their critical section.
+		\item No assumptions may be made about speeds or number of CPUs.
+		\begin{myitemize}
+			\item Note: We can relax this assumption for most embedded systems since they have single CPUs.
+			\item May apply to systems using multicore micro-controllers.
+		\end{myitemize}
+		\item No process outside of its critical section can block other processes.
+		\item No process should wait forever to enter its critical section.
+	\end{myenumerate}
+\end{theorem}
+
+\begin{tcolorbox}
+	\textsf{Can local variables created in C be affected by race condition?}
+	
+	Local variables are created on the process’s stack when a function is called. They’re popped off and lost when the function exits. They can never cause race conditions because only the thread or process calling that function can access to the variables.  Since no other process or thread has access, race conditions are not possible.
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{What can cause Co-operative multitaskers produce incorrect results?}
+	
+	\begin{myitemize}
+		\item The sequence of process execution might be wrong. The scheduler might choose to run process A before B, when A depends on a result in B.
+		\item A process may inadvertently give up control of the CPU before completing calculations, causing a dependent process to run and get the wrong results. An example of this is when a process decides to call \textsf{printf}, which will trigger an OS call that might trigger a context switch without the programmer’s knowledge.
+	\end{myitemize}
+
+\end{tcolorbox}
+
+\begin{tcolorbox}
+	\textsf{How mutual exclusion guarantees that the two processes produce only correct values of n?}
+	
+	Mutex guarantees that each process reads, updates and writes n before the other process runs. (Race condition for two not atomic operations)
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Atomicity}}
+	means that the steps taken in an instruction, or the steps taken in a group of instructions, are executed as one complete unit without possibility of interruption.
+	\begin{myitemize}
+		\item Single-processor operating systems may disable interrupts to guarantee atomicity because task/process/thread switching does not happen without interrupts.
+		\item User programs may not be as thoroughly tested, and allowing user programs to disable interrupts could lead to the entire system being crippled, as no further task switches would be possible.
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{\textbf{Mutual Exclusion Implementation}}
+	\begin{myitemize}
+		\item \textbf{Disabling Interrupts} (which is the only way to preempt a process)
+		\begin{myitemize}
+			\item disabling interrupts will prevent other processes from starting up and entering their critical sections.
+			\item Carelessly disabling interrupts can cause the entire system to grind to a halt.
+			\item This only works on single-processor, single core systems. Violates Rule 2.
+		\end{myitemize}
+		\item Using \textbf{Lock Variables}
+		\begin{myitemize}
+			\item A single global variable \textsf{lock} is initially 1.
+			\item Process A reads this variable and sets it to 0, and enters its critical section.
+			\item Process B reads \textsf{lock} and sees it’s a 0. It doesn’t enter critical section and waits until \textsf{lock} is 1.
+			\item Process A finishes and sets \textsf{lock} to 1, allowing B to enter
+			\item PROBLEM: There’s a race condition on \textsf{lock}  itself.
+			\item NOTE: unlocking a mutex before it is locked can put it into an undefined state in POSIX systems.
+			\item \textbf{Test and Set Lock} (\textsf{TSL})
+			\begin{myitemize}
+				\item CPU locks the address and data buses, and reads ''lock'' from memory. The locked address and data buses will block accesses from all other CPUs. (''atomic''. This means that NOTHING can interrupt execution of this instruction. This is guaranteed in hardware.)
+				\item The current value is written into register ''reg''.
+				\item A ''1'' (or sometimes ''0'') value is written to ''lock''.
+				\item CPU unlocks the address and data buses.
+				\item ALTERNATIVE: the XCHG instruction, used on Intel machines. Swaps contents of ''lock'' and ''reg'' instead of just writing ''1'' to lock.
+			\end{myitemize}
+			\item \textbf{Peterson's solution}
+			\begin{figure}[!h]
+				\includegraphics[scale=0.45]{m1/peterson1}
+				\includegraphics[scale=0.45]{m1/peterson2}
+			\end{figure}
+			\begin{myitemize}
+				\item It differs from the \textbf{single lock variable} implementation in that there are two different lock variables, one for each process
+				\item Each processes only WRITES to the lock variable, which is an atomic operation. The main weakness of the Lock Variable solution is that it involved read-update-write operations on a single shared variable, which does not happen in this case.
+				\item Before entering the critical section, both processes check to see whether THE OTHER process intends to enter. If so it waits.
+				\item Setting interested to TRUE takes place BEFORE this check, so in the worst case, both set interested to true at the same time, leading to deadlock. 
+			\end{myitemize}
+
+		\end{myitemize}
+		\begin{tcolorbox}
+			\textsf{Busy-wait approaches like Peterson and TSL/XCHG have a problem called \textbf{deadlock}.} Consider two processes H and L, and a scheduler rule that says that H is always run when it is READY. Suppose L is currently in the critical region.
+			\begin{myenumerate}
+				\item H becomes ready, and L is pre-empted.
+				\item H tries to obtain a lock, but cannot because L is in the critical region.
+				\item H loops forever, and CPU control never gets handed to L.
+				\item As a result L never releases the lock.
+			\end{myenumerate}
+			
+			\textbf{**Rescue for Peterson}: by using \textsf{turn}, which can be either 0 or 1, we prevent both process stuck and busy waiting, one of them will execute the critical section and then leave and make \textsf{interested = FALSE}. (as shown in the above code)
+		\end{tcolorbox}
+		\item \textbf{Sleep/Wake}
+		\begin{myitemize}
+			\item When a process finds that a lock has been set (i.e. another process in the critical section), it calls ''sleep'' and is put into the blocked state.
+			\item When the other process exits the critical section and clears the lock, it can call ''wake'' which moves the blocked process into the READY queue for eventual execution.
+		\end{myitemize}
+		\begin{myitemize}
+			\item \textsf{producer-consumer problem}: Deadlock occurs when:
+			\begin{myenumerate}
+				\item Consumer checks ''count'' and finds it is 0.
+				\item Consumer gets pre-empted and producer starts up.
+				\item Producer adds an item, increments count to ''1'', then sends  a WAKE to the consumer. (Since consumer is not technically sleeping yet, the WAKE is lost.)
+				\item Consumer starts up, and since count is 0, goes to SLEEP.
+				\item Producer starts up, fills buffer until it is full and SLEEPs.
+				\item Since consumer is also SLEEPing, no one wakes the producer. \textbf{Deadlock!}
+			\end{myenumerate}
+		\end{myitemize}
+		\item \textbf{Semaphores}, a special lock variable that counts the number of wake-ups saved for future use.
+		\begin{myitemize}
+			\item  A value of “0” indicates that no wake-ups have been saved.
+			\item Two ATOMIC operations on semaphores:
+			\begin{myitemize}
+				\item DOWN, TAKE, PEND or P: If the semaphore has a value of $>0$, it is decremented and the DOWN operation returns. If the semaphore is 0, the DOWN operation blocks.
+				\item UP, POST, GIVE or V: If there are any processes blocking on a DOWN, one is selected and woken up. Otherwise UP increments the semaphore and returns.
+			\end{myitemize}
+			\item When a semaphore’s counting ability is not needed, we can use a simplified version called a “mutex”. (1 = Unlocked. 0 = Locked.)
+			\item non\_critical\_section() $\rightarrow$ DOWN(sema) $\rightarrow$ critical\_section() $\rightarrow$ UP(sema)
+			\item We can also implement mutexes with \textsf{TSL} or \textsf{XCHG}. 0 = Unlocked, 1 = Locked
+			\begin{figure}[!h]
+				\includegraphics[scale=0.35]{m1/mutexWithTSL}
+				\centering
+			\end{figure}
+			\begin{tcolorbox}
+				\textsf{Problems with Semaphores: Deadlock} (on the left is the correct version)
+				
+				\includegraphics[scale=0.45]{m1/producerConsumerCode1}
+				\includegraphics[scale=0.45]{m1/producerConsumerCode2}
+				\centering
+			\end{tcolorbox}
+			\item Producer successfully DOWNs the mutex.
+			\item Producer DOWNs “empty”. However the queue is full so this blocks.
+			\item Consumer DOWNs mutex and blocks.
+			\begin{myitemize}
+				\item Consumer now never reaches the UP for “empty” and therefore cannot unblock the producer.
+				\item The producer in turn never reaches the UP for mutex and cannot unblock the consumer. \textbf{Deadlock!}
+			\end{myitemize}
+			\begin{tcolorbox}
+				\textsf{Reusable/Consumable Resources}
+				\begin{myitemize}
+					\item \textbf{Reusable} Resources - usually causes deadlocks
+					\begin{myitemize}
+						\item Examples: memory, devices, files, tables 
+						\item Number of units is \textbf{constant}
+						\item Unit is either free or allocated; \textbf{no sharing} (no simultaneous using) 
+						\item Process \textbf{requests, acquires, releases units}
+					\end{myitemize}
+					\item \textbf{Consumable} Resources
+					\begin{myitemize}
+						\item Examples: messages, signals
+						\item Number of units \textbf{varies} at runtime 
+						\item Process \textbf{releases} (create) units (without acquire) 
+						\item Other process \textbf{requests} and \textbf{acquires} (consumes)
+						\item Deadlock when A and B are waiting for each other's message/ signal $\dots$
+					\end{myitemize}
+				\end{myitemize}
+			\end{tcolorbox}
+		\end{myitemize}
+	\end{myitemize}
+\end{example}
+
+\begin{method}{\textbf{Dealing with deadlocks}}
+	\begin{myenumerate}
+		\item \textbf{Detection and Recovery}: Allow deadlock to happen and eliminate it
+		\item \textbf{Avoidance (dynamic)}: Runtime checks disallow allocations that might lead to deadlocks
+		\item \textbf{Prevention (static)}: Restrict type of request and acquisition to make deadlock impossible
+	\end{myenumerate}
+\end{method}
+
+\begin{theorem}{\textbf{Conditions for Deadlock}}
+	\begin{myenumerate}
+		\item Mutual exclusion: Resources not sharable
+		\item Hold and wait: Process must be \textbf{holding one} resource while \textbf{requesting another}
+		\item Circular wait: \textbf{At least 2} processes must be blocked on each other
+	\end{myenumerate}
+\end{theorem}
+
+\begin{definition}{\textbf{Spooling}}
+	is a specialised form of multi-programming for the purpose of \textbf{copying data between different devices}. In contemporary systems it is usually used for mediating between a computer \textbf{application} and a slow \textbf{peripheral}, such as a printer. Spooling allows programs to ''hand off'' work to be done by the peripheral and then proceed to other tasks, or do not begin until input has been transcribed. A dedicated program, the \textbf{spooler}, maintains an orderly sequence of jobs for the peripheral and feeds it data at its own rate. Conversely, for slow input peripherals, such as a card reader, a spooler can maintain a sequence of computational jobs waiting for data, starting each job when all of the relevant input is available; see \textbf{batch processing}. The \textbf{spool} itself refers to the sequence of jobs, or the storage area where they are held. In many cases the spooler is able to drive devices at their full rated speed with minimal impact on other processing. \textbf{Spooling} is a combination of \textbf{buffering} and \textbf{queueing}.
+\end{definition}
+
+\begin{method}{\textbf{Deadlock Prevention}}
+	\begin{myenumerate}
+		\item Eliminate mutual exclusion
+		\begin{myitemize}
+			\item Not possible in most cases
+			\item Spooling makes I/O devices sharable
+		\end{myitemize}
+		\item Eliminate hold-and-wait 
+		\begin{myitemize}
+			\item \textbf{Request} all \textbf{resources at once}
+			\item \textbf{Release} all resources \textbf{before a new request}
+			\item \textbf{Release} all resources if \textbf{current request blocks}
+		\end{myitemize}
+		\item Eliminate circular wait
+		\begin{myitemize}
+			\item Order all resources
+			\item Process must request in \textbf{ascending order}
+		\end{myitemize}
+	\end{myenumerate}
+\end{method}
+
+\begin{tcolorbox}
+	\textsf{Problems with Semaphores: Priority Inversion}	priority(Process C) $<$ priority(Process B) $<$ priority(Process A), Process B effectively blocks out Process A, although Process A has higher priority!
+	
+	\includegraphics[scale=0.5]{m1/priorityInversion}
+	\centering
+\end{tcolorbox}
+
+\begin{definition}{\textbf{Monitor}}, similar to a class or abstract-data type in C++ or JAVA:
+	\begin{myitemize}
+		\item \textbf{Collection of procedures}, variables and data structures grouped together in a package. Access to variables and data possible only through methods defined in the monitor.
+		\item However, \textbf{only one} process can be active in a monitor at any point in time. I.e. if any other process tries to call a method within the monitor, it will block until the other process has exited the monitor.
+		\item \textbf{Implementation}: (mutexes or binary semaphores)
+		\begin{myitemize}
+			\item When a process calls a monitor method, the method first checks to see if any other process is already using it. 
+			\item If so, the calling process blocks until the other process has exited the monitor.
+			\item The mutex/semaphore operations are inserted by the compiler itself rather than by the user, reducing the likelihood of errors.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Condition Variable} - mechanisms for coordination}
+	\begin{myenumerate}
+		\item One process WAITs on a condition variable and blocks.
+		\item Another process SIGNALs on the same condition variable, unblocking the WAITing process.
+	\end{myenumerate}
+\end{definition}
+
+\begin{tcolorbox}
+	\begin{center}
+		\includegraphics[scale=0.4]{m1/producerConsumerMonitor1}
+		\includegraphics[scale=0.4]{m1/producerConsumerMonitor2}
+	\end{center}
+	
+	Similar to Sleep/Wake, however, the mutual exclusion from the monitor prevents the SIGNAL from being lost! 
+\end{tcolorbox}
+
+	\textsf{$\circledast$ Monitors and Condition Variables Problems} - Violation of mutual exclusion
+	\begin{myitemize}
+		\item When a process encounters a WAIT, it is blocked and another process is allowed to enter the monitor.
+		\item When there’s a SIGNAL, the sleeping process is woken up.
+		\item We will potentially now have two processes in the monitor at the same time:
+		\begin{myitemize}
+			\item The process doing the SIGNAL (the signaler).
+			\item The process that just woke up because of the SIGNAL (the signaled).
+		\end{myitemize}
+	\end{myitemize}
+
+	\textsf{$\circledast$ Ways to resolve}
+	\begin{myitemize}
+		\item We require that the signaler exits immediately after calling SIGNAL.
+		\item We suspend the signaler immediately and resume the signaled process.
+		\item We suspend the signaled process until the signaler exits, and resume the signaled process only after that.
+	\end{myitemize}
+	
+\begin{remark}{\textbf{Comparison between semaphore and condition variable}}
+
+	\begin{myitemize}
+		\item \textsf{Semaphore}
+		\begin{myitemize}
+		\item If Process A UPs a semaphore with no pending DOWN, the UP is saved.
+		\item The next DOWN operation will not block because it will match immediately with a preceding UP.
+		\end{myitemize}
+		\item \textsf{Condition variable}
+		\begin{myitemize}
+		\item If Process A SIGNALs a condition variable with no pending WAIT, the SIGNAL is simply lost.
+		\item This is similar to the SLEEP/WAKE problem earlier on.
+		\end{myitemize}
+	\end{myitemize}
+\end{remark}
+
+\begin{remark}
+	\begin{myitemize}
+		\item conditional variables can also be used together with mutexes:
+		\begin{myenumerate}
+			\item acquire mutex \textsf{pthread\_mutex\_lock(\&mutex)}
+			\item wait on a conditional variable \textsf{pthread\_cond\_wait(\&v,\&mutex)}
+			\item When conditional wait has exited, the signal has been received, other stuffs can be done.
+			\item unlock the mutex \textsf{pthread\_mutex\_unlock(\&mutex)}
+			\item \textbf{Note}: It is important for conditional variables to be used within a mutual exclusion: Mutual exclusion prevents a process from being pre-empted before it has had a chance to sleep, eliminating the lost-signal problem. \textsf{pthread\_cond\_wait} automatically gives up the mutex so that other process can do stuff and then wake up it with good `results' to use.
+		\end{myenumerate}
+		\item Implement conditional variables using only mutex and semaphores
+
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem1}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem2}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem3}
+		\includegraphics[width=.5\linewidth]{m1/ImplementCONDVARWithMutexSem4}
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{Barrier}}
+	is a special form of synchronization mechanism that works with groups of processes rather than single processes.
+	\begin{center}
+		\includegraphics[scale=0.5]{m1/barrier}
+	\end{center}
+	
+	The idea of a barrier is that all processes must reach the barrier (signifying the end of one phase of computation) before any of them are allowed to proceed.
+	\begin{myitemize}
+		\item Process D reaches the end of the current phase and calls a BARRIER primitive in the OS. It gets blocked.
+		\item Similarly processes A and B reach the end of the current phase, calls the same BARRIER primitive and is blocked.
+		\item Finally process C reaches the end of its computation, calls the BARRIER primitive, causing all processes to be unblocked at the same time.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{UNIX Pipe}}
+	\begin{myitemize}
+		\item A pipe provides synchronisation
+	\begin{myitemize}
+		\item A process reading a pipe will block until there is data.
+		\item Data send is asynchronous but blocks when buffer is full.
+	\end{myitemize}
+	\item A pipe provides byte-level message transfer between processes.
+	\item Traditional method of communication between processes in UNIX: \textsf{Shell pipelines}
+	\begin{myitemize}
+		\item \textsf{grep buffer *.c $|$ sort -u $|$ wc}
+		\item Output from program to left of bar provides input to program on right.
+		\item Meaning: search for occurrences of string ''buffer'' in C files (grep process), sort those lines making them unique (sort process), and count how many occurrences  (wc process)
+	\end{myitemize}
+	\begin{center}
+		\includegraphics[scale=0.35]{m1/unixPipe}
+	\end{center}
+	\item Creating pipes: \textsf{int pipe(int fd\_array[])} returns 2 file descriptor for the (anonymous) pipe
+	\begin{myitemize}
+		\item Data is sent/received using normal write/read system calls
+		\item write on \textsf{fd[1]}, read on \textsf{fd[0]}, e.g., \textsf{fd[1]} is the write end, \textsf{fd[0]} is the read end.
+		\begin{center}
+			\includegraphics[scale=0.5]{m1/creatingPipe}
+		\end{center}
+		\item Some versions of Unix support duplex pipes, can readwrite on either end -- with corresponding write/read on opposite end; other Unixes only have one way pipes
+		\item \textbf{File Descriptor}: a reference to a file when making system call, come from opening a file with \textsf{open()} system call but also other system calls which deal with files such as \textsf{pipe()}
+	\end{myitemize}
+	\end{myitemize}
+\end{definition}
+\begin{remark}
+	\begin{myitemize}
+		\item Closing unused pipe descriptor is good practice (not necessary to close all unused pipe descriptors).
+		\item Closing the write end of the pipe, allows reader to determine when there is no more data: when all pipe ends closed, read gives EOF.
+		\item Data read is the minimum of what is available and requested size. (e.g., \textsf{buffer} size is 100 but the string written was 10 chats)
+		\item Pipes only used for unstructured byte streams.
+	\end{myitemize}
+\end{remark}
+
+\begin{definition}{\textbf{FIFO files (Named pipes)}}
+	\begin{myitemize}
+		\item \textbf{Anonymous pipe}: can only use between related processes, e.g., parent + children.
+		\item FIFO files are named pipes, pipes with a filename.
+		\item Exist independent of process: any processes can use FIFO
+		\item FIFO is a special file since it's really a pipe, cannot seek, no data is written to filesystem, every open FIFO corresponds to 1 pipe object.
+		\item Can be created with \textsf{mkfifo} shell command or \textsf{mknod()} system call.
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{Shell named pipe}
+	\begin{myenumerate}
+		\item \textsf{mkfifo pipe; ls -l $>$ pipe}
+		\item \textsf{cat pipe} (in another shell login)
+	\end{myenumerate}
+\end{example}
+
+\begin{example}{Programming named pipe}
+
+\noindent\begin{minipage}{.48\textwidth}
+\begin{lstlisting}[caption=writer.c,frame=tlrb,language=C]{Name}
+    int fd;
+    char * myfifo = "/tmp/myfifo";
+
+    mkfifo(myfifo, 0666);
+
+    fd = open(myfifo, O_WRONLY);
+    write(fd, "Hi", sizeof("Hi"));
+    close(fd);
+
+    /* remove the FIFO */
+    unlink(myfifo);
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.48\textwidth}
+\begin{lstlisting}[caption=reader.c,frame=tlrb,language=C]{Name}
+    int fd;
+    char * myfifo = "/tmp/myfifo";
+    char buf[MAX_BUF];
+
+    /* open, read, and display */
+    fd = open(myfifo, O_RDONLY);
+    read(fd, buf, MAX_BUF);
+    printf("Received: %s\n", buf);
+    close(fd);
+
+\end{lstlisting}
+\end{minipage}
+\textbf{Note}: When only one program is run it will hang. writer.c blocks at the ''write'' statement, which means it will not call unlink to delete the named pipe until the reader has read the pipe.
+
+\end{example}
+
+\begin{example}{\textbf{UNIX shared memory}}
+	\begin{myitemize}
+		\item Without an explicit delete command, the shared memory region stays around.
+		\item The shared memory region is identified by a number (id). A memory address is generated only when you attempt to attach to the identified region.
+		\item Permission bits can be set to allow other processes to use a particular shared memory region. If you use the most permissive setting, any process can access. (e.g. a permission bits of 0666).
+	\end{myitemize}
+\end{example}
+
+\newpage
+
+\section{File System}
+
+\begin{definition}{\textbf{File system}}
+	\begin{myitemize}
+		\item Present logical (abstract) view of files and directories
+		\begin{myitemize}
+			\item Accessing a disk is very complicated: (2D or 3D structure, track/surface/sector, seek, rotation, $\dots$)
+			\item Hide complexity of hardware devices
+		\end{myitemize}
+		\item Facilitate efficient use of storage devices: Optimise access e.g. to disk.
+		\item Support sharing
+		\begin{myitemize}
+			\item Files persist even when owner/creator is not currently active (unlike main memory)
+			\item Key issue: Provide protection (control access)
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Hierarchical View of File system}}
+	\begin{center}
+		\includegraphics[scale=0.5]{m2/hierarchyFileSystem}
+	\end{center}
+	\begin{myitemize}
+		\item \textbf{Directory management}: map logical name to unique Id, file descriptor
+		\item \textbf{Basic file system}: open/close files
+		\item \textbf{Physical device  organization}: map file data to disk blocks
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{User-end view of File}}
+	\begin{myitemize}
+		\item \textbf{File name and type}
+		\begin{myitemize}
+			\item Valid name: number or characters, lower or upper cases, illegal characters $\dots$
+			\item Extension: tied to type of file, used by applications
+			\item File type is recorded in header
+			\begin{myitemize}
+				\item Cannot be changed (even when extension changes)
+				\item Basic types: text, object, load file, directory
+				\item Application-specific types, e.g., .doc, .ps, .html
+			\end{myitemize}
+		\end{myitemize}
+		\item \textbf{Logical file organization}
+		\begin{myitemize}
+			\item Most common: byte stream
+			\item Fixed-size or variable-size records
+			\item Addressed: \textbf{Implicitly} (sequential access to next record), or \textbf{Explicitly} by position (record\#) or key
+			\begin{center}
+				\includegraphics[scale=0.4]{m2/fileOrgType}
+			\end{center}
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Directory Management}}
+\begin{myitemize}
+	\item \textbf{Main issues}:
+	\begin{myitemize}
+		\item \textbf{Shape} of the data structure
+		\item \textbf{What} info to keep about files
+		\item \textbf{Where} to keep the files in directory
+		\item \textbf{How} to organise entries for efficiency?
+	\end{myitemize}
+	\item \textbf{File directory data structure}:
+	\begin{myitemize}
+		\item \textbf{Tree-structured}
+		\begin{myitemize}
+			\item \textbf{Simple} search, insert, delete operations
+			\item Sharing is \textbf{asymmetric}
+			\begin{center}
+				\includegraphics[scale=0.3]{m2/treeStructureFile}
+			\end{center}
+		\end{myitemize}
+		\item \textbf{DAG-structured}
+		\begin{myitemize}
+			\item \textbf{Symmetric} sharing
+			\item \textbf{Delete}: only last parent should remove files, so need \textbf{Reference count}
+			\begin{center}
+				\includegraphics[scale=0.3]{m2/DAGStructureFile}
+			\end{center}
+		\end{myitemize}
+		\item \textbf{DAG-structured with cycles}
+		\begin{myitemize}
+			\item Search is difficult with infinite loops
+			\item Deletion needs \textbf{garbage collection} (reference count not enough)
+		\end{myitemize}
+		\begin{center}
+			\includegraphics[scale=0.3]{m2/DAGwithCycleFile}
+		\end{center}
+		\item \textbf{Symbolic links (shortcuts)}
+		\begin{myitemize}
+			\item \textbf{Compromise} to allow sharing but avoid cycles.
+			\item For \textbf{read/write}: symbolic link is the same as actual link.
+			\item For \textbf{deletion}: only symbolic link is deleted.
+		\end{myitemize}
+		\begin{center}
+			\includegraphics[scale=0.3]{m2/symbolicStructureFile}
+		\end{center}
+	\end{myitemize}
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{UNIX Hard Links}}
+	\vspace{3mm}
+	
+	\hspace{-15mm}
+	\includegraphics[scale=0.35]{m2/unixHardLink1}
+	\includegraphics[scale=0.35]{m2/unixHardLink2}
+	
+\end{definition}
+
+\begin{definition}{\textbf{Symbolic Links}}
+	\vspace{3mm}
+	
+	\hspace{-15mm}
+	\includegraphics[scale=0.36]{m2/symbolicLink1}
+	\includegraphics[scale=0.36]{m2/symbolicLink2}
+	
+\end{definition}
+
+\begin{remark}{\textbf{Windows Shortcuts}}
+	\begin{myitemize}
+		\item Similar to symbolic links but does not re-expand further
+		\item Only understood by GUI shell! Created also from GUI shell
+		\item Win NTFS has hard links, symbolic links using junction mechanism (not normally used)
+	\end{myitemize}
+\end{remark}
+
+\begin{remark}{\textbf{File Directories - Path name}}
+	\begin{myitemize}
+		\item Concatenated local names with delimiter (. or / or $\backslash$ )
+		\item \textbf{Absolute} path name: start with root (/)
+		\item \textbf{Relative} path name: start with current directory (.)
+		\item Notation to move upward in hierarchy (..)
+	\end{myitemize}
+\end{remark}
+
+\begin{minipage}{0.45\linewidth}
+	\begin{method}{\textbf{Implementation of Directories}}
+		\begin{myitemize} 
+		\item \textbf{What information to keep in each entry}
+		\begin{myitemize}
+			\item \textbf{All} descriptive information, directory can become very large, searches are difficult / slow.
+			\item Only symbolic \textbf{name and pointer} to descriptor
+			\begin{myitemize}
+				\item Needs an extra disk access to descriptor
+				\item Variable name length
+			\end{myitemize}
+		\end{myitemize}
+		\item \textbf{How to organise entries within directory}
+		\begin{myitemize}
+			\item \textbf{Fixed-size} entries: use array of slots
+			\item \textbf{Variable-size} entries: use linked list
+			\item \textbf{Size of directory}: fixed or expanding
+		\end{myitemize}
+		\item \textbf{Example}: Windows 2000: When \# of entries exceeds directory size, expand using $B^{+}-tree$.
+	\end{myitemize}
+	\end{method}
+	\end{minipage}\hspace{5mm}
+	\begin{minipage}{0.5\linewidth}
+		\includegraphics[width=0.8\linewidth ]{m2/implementDirectory}
+		\includegraphics[width=0.8\linewidth ]{m2/entryOrganization}
+	\end{minipage}
+	
+\begin{definition}{\textbf{File Descriptor}}
+	Owner id; File type (whether it's a folder, a file, a symbolic link etc.); Protection information; Mapping to physical disk blocks (\textbf{TOC - table of contents}); Time of creation, last use, last modification; Reference counter.
+\end{definition}
+
+\begin{definition}{\textbf{OFT - Open file table}}
+	keeps track of currently open files. \textbf{OFT entries}: current position (read to which part); information from descriptor (file length, disk location); pointers to allocated buffers. \textbf{Two types}: system OFT (system-wide), process OFT (open files by a process)
+\end{definition}
+
+\begin{definition}{\textbf{Basic File System Operations}}
+	\begin{myitemize}
+		\item \textbf{\textsf{open} file} \textsf{FILE *fopen(const char *filename, const char *mode)}
+		\begin{myenumerate}
+			\item Search directory for given file and verify access rights
+			\item Allocate and fill in OFT entries and read/write buffers
+			\item Return OFT index
+		\end{myenumerate}
+		\item \textbf{\textsf{close} command} \textsf{int fclose(FILE *stream)}
+		\begin{myenumerate}
+			\item Flush modified buffers to disk and release buffers
+			\item Update file descriptor (file length, disk location, usage information)
+			\item Free OFT entry
+		\end{myenumerate}
+		\item \textbf{\textsf{read} command} \textsf{size\_t fread(void *ptr, size\_t size (of element), size\_t nmemb (number of elements), FILE *stream)}
+		\begin{myitemize}
+			\item assume file is open for \textbf{sequential} access
+			\item \textbf{Buffered read}: current block kept in r/w buffer
+			\begin{myenumerate}
+				\item copy from buffer to memory until desired count or end of file is reached: - update current position, return status
+				\item copy from buffer to memory until end of buffer is reached: write the buffer to disk if modified; read the next block; continue copying
+			\end{myenumerate}
+			\item \textbf{Unbuffered read}: read the entire block containing the needed data from disk
+		\end{myitemize}
+		\item \textbf{\textsf{write} command (buffered)} \textsf{size\_t fwrite(const void *ptr, size\_t size, size\_t number, FILE *stream)}
+		\begin{myenumerate}
+			\item Write into buffer,
+			\item When full, write buffer to disk. If next block does not exist (file is expanding): - allocate new block -update file descriptor - update bit map (free space on disk).
+			\item Update file length in descriptor
+		\end{myenumerate}
+		\item \textbf{\textsf{seek} command} \textsf{int fseek(FILE *stream, long int offset, int whence)}
+		\begin{myenumerate}
+			\item Set current position as specified by parameter
+			\item Read block containing current position into buffer
+		\end{myenumerate}
+		\item \textbf{\textsf{rewind} command}: analogous to seek but position is zero
+	\end{myitemize}
+\end{definition}
+	
+\begin{definition}{\textbf{Organising data on a disk}}
+
+	\includegraphics[width=0.48\linewidth]{m2/diskOrgnization1}
+	\includegraphics[width=0.48\linewidth]{m2/diskOrgnization2}
+\end{definition}
+
+\begin{definition}{\textbf{Fragmentation}}
+	\begin{myitemize}
+		\item \textbf{Internal fragmentation}: Due to the rules governing memory allocation, more computer memory is sometimes allocated than is needed. Any process, no matter how small, occupies an entire partition. This waste is called internal fragmentation. (unused memory within the allocated region)
+		\item \textbf{External fragmentation}: External fragmentation arises when free memory is separated into small blocks and is interspersed by allocated memory. (unusable storage is outside the allocated regions.)
+	\end{myitemize}
+\end{definition}
+	
+\begin{definition}{\textbf{Data structures on Disk}}
+	\textbf{Note}: need to record which block belongs to which part of files. Data structure must also be stored on disk.
+	\begin{myitemize}
+		\item \textbf{Contiguous organization}
+		\begin{myenumerate}
+			\item \textbf{Advantages}: Simple implementation; Fast sequential access (minimal arm movement)
+			\item \textbf{Disadvantages}: Insert/delete is difficult; How much space to allocate initially? External fragmentation
+
+			\includegraphics[width=1.0\linewidth]{m2/contiguousOrganization}
+		\end{myenumerate}
+		\item \textbf{Linked organization}
+		\begin{myenumerate}
+			\item \textbf{Advantages}: Simple insert/delete, no external fragmentation
+			\item \textbf{Disadvantages}: Sequential access less efficient (seek latency); Direct access not possible; Poor reliability (when chain breaks)
+
+			\includegraphics[width=1.0\linewidth]{m2/linkedOrganization}
+			
+			\item \textbf{Linked Variation 1}: keep pointers segregated, may be cached. (FAT32)
+
+			\includegraphics[width=1.0\linewidth]{m2/linkedVariation1}
+			
+			\item \textbf{Linked Variation 2}: Link sequences of adjacent blocks, rather than individual blocks 
+			
+			\includegraphics[width=1.0\linewidth]{m2/linkedVariation2}
+			
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT1}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT2}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT3}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT4}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT5}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT6}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT7}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT8}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT9}
+			\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT10}
+			\begin{center}
+				\includegraphics[width=0.50\linewidth]{m2/MSDOSFAT11}
+			\end{center}
+		\end{myenumerate}
+		
+		\item \textbf{Indexed organization}
+		\begin{myenumerate}
+			\item \textbf{Index table}: sequential list of records; \textbf{implementation}: keep index list in descriptor 
+			\item \textbf{Advantage}: Insert/delete is easy; Sequential and direct access is efficient
+			\item \textbf{Disadvantage}: file size limited by number of index entries
+			
+			\includegraphics[width=1.0\linewidth]{m2/indexedOrganization}
+			
+			Block 6 contains bytes 0-1023, block 18 contains bytes 1024-2047, etc (1024 bytes block).
+			
+			\item \textbf{Multi-level index hierarchy}: Primary index points to secondary indices \textbf{Problem}: number of disk accesses increases with depth of hierarchy.
+			\item \textbf{Incremental indexing}: number of disk accesses increases with depth of hierarchy; When insufficient, allocate additional index levels; \textbf{Example}: Unix, 3-level expansion.
+			
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem1}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem2}
+			
+			\begin{minipage}{0.5\linewidth}
+				\includegraphics[width=1.0\linewidth]{m2/systemVFileSystem3}
+			\end{minipage}
+			\begin{minipage}{0.5\linewidth}
+				\textbf{Incremental indexing in Unix} (file size vs. speed of access)
+				\begin{myitemize}
+					\item blocks 0-9: 1 access (direct).
+					\item blocks 10-137: 2 access.
+					\item blocks 138-16521: 3 access. etc.
+				\end{myitemize}
+				
+				\includegraphics[width=1.0\linewidth]{m2/systemVFileSystem4}
+			\end{minipage}
+			
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem5}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem6}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem7}
+			\includegraphics[width=0.50\linewidth]{m2/systemVFileSystem8}
+		\end{myenumerate}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Free storage space management}}
+	\begin{myitemize}
+		\item \textbf{Linked list organization}
+		\begin{myenumerate}
+			\item Linking \textbf{individual} blocks: inefficient; no blocks clustering to minimise seek operations; groups of blocks are allocated/released one at a time.
+			\item Better: Link \textbf{groups} of consecutive blocks
+		\end{myenumerate}
+		\item \textbf{Bit map organization} (residing in super block)
+		\begin{myenumerate}
+			\item Analogous to main memory
+			\item A single bit per block indicating if free or occupied
+		\end{myenumerate}
+	\end{myitemize}
+\end{definition}
+
+\newpage
+\section{I/O System}
+
+\begin{definition}{\textbf{I/O Devices}}
+	\begin{myitemize}
+		\item \textbf{Communication devices}: Input only (mouse, keyboard); output only (display); Input/output (network card)
+		\item \textbf{Storage devices}: Input/output (disk, tape); Input only (CD-ROM)
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Main tasks of I/O System}}
+	\begin{myitemize}
+		\item Present \textbf{logical} (abstract) view of devices (\textbf{hide}: details of hardware interface and error handling)
+		\item Facilitate \textbf{efficient} use: overlap CPU and I/O
+		\item Support \textbf{sharing} of devices: protection when device is shared (disk), scheduling when exclusive access needed (printer)
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Block-Oriented Device Interface}}
+	\begin{myitemize}
+		\item \textbf{Description}: direct access, contiguous blocks, usually fixed block size
+		\item \textbf{Operation}:
+		\begin{myitemize}
+			\item \textbf{Open}: verify device is ready, prepare it for access
+			\item \textbf{Read}: Copy a block into main memory 
+			\item \textbf{Write}: Copy a portion of main memory to a block
+			\item \textbf{Close}: Release the device
+			\item \textbf{*Note}: these are lower level than those of the FS 
+		\end{myitemize}
+		\item \textbf{Application}: Used by File System and Virtual Memory System; Applications typically go through the File System
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Stream-Oriented Device Interface}}
+	\begin{myitemize}
+		\item \textbf{Description}: character-oriented, sequential access
+		\item \textbf{Operation}:
+		\begin{myitemize}
+			\item \textbf{Open}: reserve exclusive access
+			\item \textbf{Get}: return next character of input stream
+			\item \textbf{Put}: append character to output stream
+			\item \textbf{Close}: release exclusive access
+			\item \textbf{*Note}: these too are different from those of the FS but some systems try to present a uniform view of files and devices 
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{minipage}{0.35\linewidth}
+	\begin{definition}{\textbf{I/O Devices - Ouput}}
+		\begin{myitemize}
+			\item \textbf{Display monitors}: 
+			\begin{myitemize}
+				\item character or  graphics oriented
+				\item Different data rates: 25 x 80 characters vs 800 x 600 pixels (1B allows 256 colors) Refresh 30-60 times/s for video 
+			\end{myitemize}
+			\item \textbf{Printers (ink jet, laser)}
+			\item \textbf{Interface}:
+			\begin{myitemize}
+				\item \textbf{write} to controller buffer
+				\item \textbf{wait} for completion
+				\item handle \textbf{errors}
+			\end{myitemize}
+		\end{myitemize}
+	\end{definition}
+\end{minipage}
+\begin{minipage}{0.65\linewidth}
+	\includegraphics[width=\linewidth]{m3/output}
+\end{minipage}
+
+\begin{definition}{\textbf{I/O Devices - Input}}
+	Keyboards, pointing devices (mouse, trackball, joystick), scanners. \textbf{Interface}: 
+	\begin{myitemize}
+		\item device generates interrupt when data is ready
+		\item read data from controller buffer
+		\item low data rates, not time-critical
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{I/O Devices - Storage}}
+
+	\begin{minipage}{0.3\linewidth}
+		\begin{myitemize}
+			\item Surface, tracks/surface, sectors/track, bytes/sector
+			\item All sectors numbered sequentially $0..(n-1)$, device controller provides mapping
+		\end{myitemize}
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView1}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView1}
+	\end{minipage}
+	
+	\begin{minipage}{0.3\linewidth}
+		\textbf{Track skew}: account for seek-to-next-track to minimise rotational delay
+		
+		\[\frac{\text{track to track seek time}}{\text{rotational time per track}} \times \text{sect} \]
+		\[\text{ors per track} = \text{offset}\]
+		\[\text{Round up the result} \]
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView3}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView4}
+	\end{minipage}
+	
+	\begin{minipage}{0.3\linewidth}
+		\textbf{Double-sided or multiple surfaces}
+		\begin{myitemize}
+			\item Tracks with same diameter = \textbf{cylinder}
+			\item Sectors are numbered within cylinder consecutively to \textbf{minimise seek time}
+		\end{myitemize}
+	\end{minipage}
+	\begin{minipage}{0.7\linewidth}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView5}
+		\includegraphics[width=0.5\linewidth]{m3/diskTrackView6}
+	\end{minipage}
+	
+	\textbf{Critical issue: data transfer rates of disks}
+	\begin{myitemize}
+		\item \textbf{Sustained} rate: continuous data delivery
+		\item \textbf{Peek} rate: : transfer once read/write head is in place; depends on rotation speed and data density
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{Transfer rate calculation:}
+	7200 rpm, 100 sectors/track, 512 bytes/sector
+	\begin{myitemize}
+		\item What is the \textbf{peak} transfer rate?
+		\[\frac{7200}{60} \times 100 \times 512 \text{byte/s} \]
+		\item What is the \textbf{sustained} transfer rate? - Depends on file organization
+	\end{myitemize}
+\end{example}
+
+\begin{definition}{\textbf{I/O programming} - access the I/O devices}
+	\begin{myitemize}
+		\item \textbf{Polling} (You with a broken ringer)
+		
+		\begin{minipage}{0.48\linewidth}
+			\begin{myitemize}
+			\item Consider a process that prints “ABCDEFGH” on the printer: The OS then copies character by character onto the printer’s latch, and the printer prints it out.
+			\begin{myenumerate}
+				\item Copy the first character and advance the buffer’s pointer. 
+				\item Check that the printer is ready for the next character. If not, wait. This is called ``busy-waiting'' or ``polling''.
+				\item Copy the next character. Repeat until buffer is empty.
+			\end{myenumerate}
+		\end{myitemize}
+		\end{minipage}\hspace{2mm}
+		\begin{minipage}{0.48\linewidth}
+				\includegraphics[width=\linewidth]{m3/polling}
+				\includegraphics[width=\linewidth]{m3/polling1}
+		\end{minipage}
+		
+		\textbf{Issue}: It takes perhaps 10ms to print a character. During this time, the CPU will be busy-waiting until the printer is done printing. On a 3.2 GHz processor this is equivalent to wasting 320,000,000 instructions! Extremely inefficient use of CPU as most polls are likely to fail. On the other hand not polling risks losing data. 
+
+
+		\item \textbf{Interrupt-driven I/O} (You with a fully functioning phone)
+
+		\begin{minipage}{0.35\linewidth}
+		\begin{myitemize}
+			\item After the string is copied, the OS will send a character to the printer, then switch to a task.
+			\item When the printer is done, it will interrupt the CPU by asserting one of the “interrupt request” (IRQ) lines on the CPU.
+			\item \textbf{Comment}: Some overhead when the hardware is ready, but much less than with polling.
+		\end{myitemize}
+		\end{minipage}\hspace{5mm}
+		\begin{minipage}{0.6\linewidth}
+			\includegraphics[width=\linewidth]{m3/InterruptIO}
+		\end{minipage}
+		
+		\item \textbf{Direct memory access} (You have an answering machine)
+		\begin{myitemize}
+			\item \textbf{Driver (CPU) operation to input sequence of bytes:}
+			\begin{tcolorbox}
+			
+				write\_reg(mm\_buf, m);     // give parameters
+			
+			write\_reg(count, n);
+			
+			write\_reg(opcode, read);  // start op
+			
+			block to wait for interrupt;
+
+			\end{tcolorbox}
+						\begin{myitemize}
+				\item Writing opcode triggers DMA controller
+				\item DMA controller issues interrupt after n chars in memory
+			\end{myitemize}
+			\item \textbf{Cycle Stealing}: 
+			\begin{myitemize}
+				\item DMA controller competes with CPU for memory access 
+				\item generally not a problem because: 1. Memory reference would have occurred anyway; 2. CPU is frequently referencing data in registers or cache, bypassing main memory.
+			\end{myitemize}
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Device Management}}
+	\begin{myitemize}
+		\item \textbf{Disk Scheduling}: Requests for different blocks arrive concurrently from different processes
+		\item Minimize \textbf{rotational delay}: re-order requests to blocks on each track to access in one rotation
+		\item Minimize \textbf{seek time}: Conflicting goals: Minimize total travel distance; Guarantee fairness
+	\end{myitemize}
+\end{definition}
+
+\begin{algoalgorithm}{\textbf{Device Management}}
+
+	\begin{minipage}{0.55\linewidth}
+		\begin{myitemize}
+		\item \textbf{FIFO}: requests are processed in the order of arrival: simple, fair, but inefficient
+		\item \textbf{SSTF} (Shortest Seek Time First): most efficient but prone to starvation
+		\begin{myitemize}
+			\item always go to the track that’s nearest to the current positions
+		\end{myitemize} 
+		\item \textbf{Scan} (Elevator): fair, acceptable performance
+		\begin{myitemize}
+			\item maintain a direction of travel
+			\item always proceed to the nearest track in the current direction of travel
+			\item if there is no request in the current direction, reverse direction
+		\end{myitemize}
+	\end{myitemize}
+	\end{minipage}\hspace{5mm}
+	\begin{minipage}{0.4\linewidth}
+	
+		\textbf{Example}: assume moving from 0 to 5; then 12,4,7 arrive
+		\includegraphics[width=\linewidth]{m3/deviceManagementAlgo}
+	\end{minipage}
+	
+\end{algoalgorithm}
+
+\begin{remark}{\textbf{block size trade off}}
+	Larger block sizes means fewer blocks that the OS needs to manage, less overhead. Disadvantage is that there will be greater wastage within each block (internal fragmentation)
+\end{remark}
+
+\begin{method}{\textbf{Disk access time calculation}} Time is takes to read one block of data:
+
+\begin{myenumerate}
+	\item \textbf{Switch time}: This is the time it takes for the drive to choose the correct side of the correct platter. (can be negligible)
+	\item \textbf{Seek time}: This is the time it takes a drive's arm to move to the correct track.
+	\item \textbf{Rotational delay}: This is the time it takes for the correct block to move underneath the head. Conventionally, taken to be $\frac{T_r}{2}$, where $T_r$ is the time for one revolution.
+	\item \textbf{Transfer delay}: This is the time taken to actually transfer the block. If the disk can transfer M bytes per second and a block is B bytes long, then this time is $\frac{B}{M}$.
+\end{myenumerate}
+
+\begin{myitemize}
+	\item \textbf{Peak data transfer rate}: The drive cannot be transferring more in one second than the amount of data in one track, multiplied by the number of times that track goes past the head per second
+	
+	\[ \text{Blocks / Track} = 16, \text{Bytes / Block} = 32768 \]
+	\[\text{Bytes / Track} = 16 \times 32768=524288 \text{ bytes},  7200rpm=120rps \]
+	\[\text{peak throughput}= 120 \times 524288= 62.9 \text{Megabytes/Sec} (1 \text{megabyte/sec} = 10^6 \text{bytes/sec}) \]
+	
+	\item \textbf{Time taken on average to read one block of data}:
+	\[ \text{Average disk read time =  switching time+seek time+rotational delay+transfer time}\]
+	\[\text{rotational delay}=\frac{1}{2} \times \frac{1}{7200/60}=0.0042s \]
+	\[\text{Data through put} = 50 \text{ megabits per second} \]
+	\[\text{data transfer time}=32768\times 8 / (50,000,000)= 0.0052s = 5.2ms \]
+	\textbf{Note}: For storage we conventionally use 1KB = 1024 bytes, not 1000 bytes. However we use 1KB = 1000 bytes for throughput.
+\end{myitemize}
+
+\end{method}
+
+\begin{remark}{\textbf{Why interrupts have overheads?}}
+	Overheads involved include detecting the interrupt, consulting the vector table to get the interrupt handler address, pushing the current PC to the stack, switching to kernel mode, and vectoring to the interrupt handler and switching back to user mode.
+\end{remark}
+
+\begin{example}{\textbf{Compare different I/O Programming methods}}
+
+	\textbf{Question}: Printing 250 characters, how many cycles are wasted on polling?
+	
+	\textbf{Assumption}: Assuming the printer is currently free, (polling) time for the first character should be negligible. Almost all CPUs can execute at least 1 instruction per cycle
+	
+	\begin{myitemize}
+		\item \textbf{Polling}: For subsequent 249 characters, there is a 10ms poll time between characters. Each clock cycle is 10ns, so this corresponds to approximately 1,000,000 clock cycles per poll, or total of about 249,000,000 cycles to print the entire 250 characters.
+		\item \textbf{Interrupt Driven}: For subsequent 249 characters we have total 300ns interrupt time, = 74,700 ns. Each clock cycle is 10ns, so this is equal to 7,470 clock cyles, a great reduction from the original 249,000,000 cycles.
+		\item \textbf{DMA}: Total time taken = setup time + end of transfer interrupt processing time = 700ns. This is equal to 70 instructions.
+	\end{myitemize}
+\end{example}
+
+\begin{example}{\textbf{Disk access time calculation}}
+	\begin{myitemize}
+		\item \textbf{What is the total number of blocks read by this program?}
+		
+		Bytes per block =128; Total number of bytes read and written (calculated from the program) = 32768; Number of blocks to be read is $\frac{32768}{128}=256$. Assuming one directory block read and one inode block read per file, then total = 256 + 2 = 258.
+		
+		\item \textbf{Assume that there is no caching or buffering (so not affected by the caching policies), and that the disk blocks are *not skewed*. What is the total time in milliseconds that this program spends reading and writing the files?}
+		\begin{myitemize}
+			\item \textbf{Calculation of \# of cylinders to read}
+
+			\# of tracks per cylinder = 4; \# of blocks per cylinder = 16 $\times$ 4= 64; 
+			
+			\textbf{\# of cylinders to read = 256 / 64 = 4} (for the file itself)
+			
+			\item \textbf{Time to read directory and inode}
+			
+			Seek time to directory block: 12ms
+		
+			Rotational delay to directory block: 3600rpm=60rps. Delay=1/(2$\times$60)=8.3ms
+			
+			Transfer delay (to read directory / inode Block): 128 / 100,000,000=0.00128ms
+			
+			Total: (12+8.3+0.00128)$\times$2=40.6ms
+			\item \textbf{Time to read first cylinder}
+			
+			Seek time to first cylinder: 12ms
+			
+			Rotational delay to first block: 8.3ms
+			
+			Bytes per cylinder = 64 $\times$ 128 = 8192
+			
+			Time to read one cylinder = 8192 / 100,000,000=0.08192ms
+			
+			Total: (12+8.3+0.08192)=20.382ms
+			
+			\item \textbf{Time to read the remaining 3 cylinders}
+			
+			Seek time to adjacent track: 2ms
+			
+			Rotation delay still 8.3ms; Total time to read data still: 0.08192ms
+			
+			Total: $3\times (2+8.3+0.08192)\times 3 = 31.146$ms
+		\end{myitemize}
+		
+		\textbf{Total time taken}: 40.6+20.382+31.146=92.128ms
+		
+		\item \textbf{Once again assuming that there is no caching or buffering, repeat part b. assuming that the blocks are *skewed* such that rotational delay is completely eliminated when the head moves to the next cylinder to continue writing.}
+		
+		Same timing, except no rotational delay for additional 3 cylinders. $92.128 - 3\times8.3 = 67.228 $ms
+	\end{myitemize}
+\end{example}
+
+
+\newpage
+\section{Memory Management}
+
+\begin{definition}{\textbf{Memory \& OS responsibility}}
+	\begin{myitemize}
+		\item \textbf{Memory} used to store: kernel code and data; user code and data
+		\item \textbf{OS Responsibilities}: 
+		\begin{myitemize}
+			\item Allocate memory to new processes.
+			\item Manage process memory.
+			\item Manage kernel memory for its own use.
+			\item Provide OS services to: get more memory, free memory, protect memory
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Physical Memory Organization}}
+	\begin{myitemize}
+		\item The actual matrix of capacitors (DRAM) or flip-flops (SRAM) that stores data and instructions.
+		\item Arranged as an array of bytes.
+		\item Memory addresses serve as byte indices.
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Word}}: CPU data transfer unit
+	\begin{myitemize}
+		\item 1 byte in 8-bit machines (ATMega328P, Intel 8080), 2 bytes in 16 bit machines (Intel 80286),  4 bytes in 32-bit machines (Intel Xeon), 8 bytes in 64-bit machines (Intel Celeron)
+	\end{myitemize}
+\end{definition}
+
+\begin{minipage}{0.6\linewidth}
+	\begin{definition}{\textbf{Endianness}}
+	\begin{center}
+		\includegraphics[width=1\linewidth]{m4/endianness}
+	\end{center}
+\end{definition}
+\end{minipage}
+\begin{minipage}{0.40\linewidth}
+	\begin{definition}{\textbf{Alignment Issues}}
+	\begin{center}
+		\includegraphics[width=1\linewidth]{m4/alignmentIssues}
+	\end{center}
+	
+	Add unused bytes to ensure data structures always in units of words. Instructions fetched across word boundaries trigger ``Bus Error'' faults.
+\end{definition}
+\end{minipage}
+
+\begin{tcolorbox}
+	\textsf{Why Memory Management?}
+	\begin{myitemize}
+		\item We want to use memory efficiently
+		\item We want to protect processes from each other
+	\end{myitemize}
+\end{tcolorbox}
+
+\begin{minipage}{0.4\linewidth}
+	\begin{myitemize}
+		\item \textbf{Logical addresses}: These are the addresses as “seen” by executing processes code.
+		\item \textbf{Physical addresses}: These are addresses that are actually sent to memory to retrieve data or instructions.
+	\end{myitemize}
+\end{minipage}
+\begin{minipage}{0.6\linewidth}
+	\includegraphics[width=\linewidth]{m4/logicalAddress}
+\end{minipage}
+
+\noindent \textbf{Note}: \textbf{Having multiple processes complicates memory management}:
+\begin{myitemize}
+	\item \textbf{Conflicting addresses}: What if $>1$ program expects to load at the same place in memory?
+	\item \textbf{Access violations}: What if 1 program overwrites the code/data of another? Worse, what if 1 program overwrites parts of the operating system?
+	\item The ideal situation would be to give each program a section of memory to work with. Basically each program will have its own address space!
+\end{myitemize}
+\textbf{To do this we require extra hardware support}:
+\begin{myitemize}
+	\item \textbf{Base register}: This contains the starting address for the program. All program addresses are computed relative to this register.
+	\item \textbf{Limit register}: This contains the length of the memory segment.
+\end{myitemize}
+\textbf{These registers solve both problems}:
+\begin{myitemize}
+	\item We can resolve address conflicts by setting different values in the base register.
+	\item If a program tries to access memory below the base register value or above the (base+limit) register value, a ``segmentation fault'' occurs!
+	\item All memory references in the program are relative to the Base Register. E.g. ``jmp 28'' above will cause a jump to location 16412.
+	\item Any memory access to location 24576 and above (or 16383 and below) will cause segmentation faults. (Other programs will occupy spaces above and below the segment given to the program shown here.)
+	\item Base and limit registers allow us to partition memory for each running process: Each process has its own fixed partition, assuming that we know how much memory each process needs.
+
+\end{myitemize}
+
+\begin{definition}{\textbf{Fragmentation Issues}}
+	
+\begin{minipage}{0.7\linewidth}
+	\begin{myitemize}
+		\item \textbf{Internal fragmentation}:
+		\begin{myitemize}
+			\item Partition is much larger than is needed.
+			\item Cannot be used by other processes.
+			\item Extra space is wasted.
+		\end{myitemize}
+		\item \textbf{External fragmentation}:
+		\begin{myitemize}
+			\item Free memory is broken into small chunks by allocated memory.
+			\item Sufficient free memory in TOTAL, but individual chunks insufficient to fulfil requests.
+		\end{myitemize}
+		\textbf{Resolution}: Internal fragmentation can be reduced by smaller size of allocation blocks. External fragmentation can be reduced by relocating occupied blocks.
+	\end{myitemize}
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+	\includegraphics[width=0.8\linewidth]{m4/fragmentationIssues}
+\end{minipage}
+\end{definition}
+
+\begin{definition}{\textbf{Managing Memory within processes}}
+	OS allocates memory for instructions. Global variables are created as part of the program’s environment, and don’t need to be specially managed. A \textbf{``stack''} is used to create local variables and store local addresses. A \textbf{``heap''} is used to create dynamic variables.
+	
+\begin{minipage}{0.55\linewidth}
+	E.g. in UNIX, process space is divided into:
+	\begin{myitemize}
+		\item \textbf{Text segments}: Read-only, contains code (like machine instruction). May have $>1$ text segments.
+		\item \textbf{Initialised Data}: Global data initialized from executable file. E.g. when you do: 
+
+		char *msg[]=``Hello world!'';
+		\item \textbf{BSS Segment}: Contains uninitialized globals.
+		\item \textbf{Stack}: Contains statically allocated local variables and arguments to functions, as well as return addresses.
+		\item \textbf{Heap}: Contains dynamically allocated memory.
+	\end{myitemize}
+\end{minipage}
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{m4/processMemory}
+\end{minipage}
+
+\end{definition}
+
+\begin{definition}{\textbf{Managing Free Memory}}
+	
+\begin{minipage}{0.5\linewidth}
+Memory is divided up into fixed sized chunks called \textbf{``allocation units''}. Common sizes range from several bytes (e.g. 16 bytes) to several kilobytes,(a).
+\begin{myitemize}
+	\item \textbf{Bit maps}
+	\item \textbf{Free/Allocated List}
+\end{myitemize}
+	
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+	\includegraphics[width=\linewidth]{m4/freeMemoryManagement}
+\end{minipage}
+
+\noindent\textbf{Bit Map (b)}
+\begin{myitemize}
+	\item Each bit corresponds to an allocation unit. A ``0'' indicates a free unit, a ``1'' indicates an allocated unit.
+	\item If a program requests for 128 bytes:
+	\begin{myenumerate}
+		\item Find how many allocation units are needed. E.g. if each unit is 16 bytes, this corresponds to 8 units.
+		\item Scan through the list to find 8 consecutive 0's.
+		\item Allocate the memory found, and change the 0's to 1's.
+	\end{myenumerate}
+	\item If a program frees 64 bytes: Mark the bits corresponding to the 4 allocation units as ``0''.
+
+\end{myitemize}
+
+\noindent\textbf{Linked list (c)}
+\begin{myitemize}
+	\item A single linked list is used to track allocated (``P'') units and free (``H'') units. Each node on the linked list also maintains where the block of free units start, and how many consecutive free units are present in that block.
+	\item Allocating free memory becomes simple: Scan the list until we reach a ``H'' node that points to a block of a sufficient number of free units.
+	\vspace{2mm}
+	
+	\begin{minipage}{0.5\linewidth}
+		\begin{myitemize}
+			\item The list is implemented as a double-linked list.
+			\begin{myitemize}
+				\item Diagram below shows possible ``neighbor combinations'' that can occur when a process X terminates.
+				\item The ``back pointer'' in a double-linked list makes it easy to coalesce freed blocks together.
+			\end{myitemize}
+		\end{myitemize}
+	\end{minipage}
+	\begin{minipage}{0.5\linewidth}
+		\includegraphics[width=\linewidth]{m4/freeLinkedList}
+	\end{minipage}
+\end{myitemize}
+\end{definition}
+
+\newpage
+\begin{definition}{\textbf{Allocation Policies}}
+	\begin{myitemize}
+		\item \textbf{First Fit}:
+		\begin{myitemize}
+			\item Scan through the list/bit map and find the first block of free units that can fit the requested size.
+			\item Fast, easy to implement.
+		\end{myitemize}
+		\item \textbf{Best Fit}:
+		\begin{myitemize}
+			\item Scan through the list/bit map to find the smallest block of free units that can fit the requested size.
+			\item Theoretically should minimise ``waste''.
+			\item However can lead to scattered bits of tiny useless holes.
+		\end{myitemize}
+		\item \textbf{Worst Fit}:
+		\begin{myitemize}
+			\item Find the largest block of free memory.
+			\item Theoretically should reduce the number of tiny useless holes.
+		\end{myitemize}
+		\item \textbf{Note}: We can sort the free memory from smallest to largest for best fit (worst case unchanged), or largest to smallest for worst fit. This minimises search time. However coalescing free neighbours will be much harder.
+		
+		\begin{minipage}{0.4\linewidth}
+		\textbf{Quick Fit: Buddy Allocation, Binary splitting}
+		\begin{myitemize}
+			\item Half of the block is allocated.
+			\item The two halves are called ``buddy blocks''.
+			\item Can coalesce again when two buddy blocks are free.
+		\end{myitemize}
+		\end{minipage}\hspace{5mm}
+		\begin{minipage}{0.55\linewidth}
+			\includegraphics[width=\linewidth]{m4/buddyAllocation1}
+		\end{minipage}
+
+	\end{myitemize}
+\end{definition}
+
+\begin{example}{\textbf{Buddy Allocation}}
+
+\begin{minipage}{0.3\linewidth}
+	\includegraphics[width=\linewidth]{m4/buddyAllocation2}
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+	\textsf{malloc(100)}
+	
+	\begin{myenumerate}
+		\item Split 512 byte block into 2 blocks of 256 bytes.
+		\item Split one 256 byte block into two 128 byte blocks.
+	\end{myenumerate}
+	
+	\textsf{free(0)}: block Coalesces
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+	\includegraphics[width=\linewidth]{m4/buddyAllocation3}
+\end{minipage}
+
+	
+\end{example}
+
+\begin{remark}{\textbf{Trade offs of using allocation units of multiple bytes versus allocation units of 1 byte}} (particularly in systems with large amounts of memory.)
+
+	\begin{myitemize}
+		\item Bigger allocation units = faster and more efficient allocation because fewer units to maintain, but bigger internal fragmentation.
+		\item Single byte units = no internal fragmentation, but can be slow and unwieldy to manage.
+	\end{myitemize}
+	
+\end{remark}
+
+
+\newpage
+\section{Virtual Memory}
+
+\begin{definition}{\textbf{Memory Hierarchy}}
+	
+	\begin{minipage}{0.5\linewidth}
+	\begin{myitemize}
+		\item Topmost layer is the fastest, but most expensive and therefore the smallest.
+		\item Bottom-most layer is the cheapest and biggest, but the slowest.
+		\item Each layer above contains a small portion of the layer below: Use \textbf{``replacement policies''} to decide which portions to copy.
+
+	\end{myitemize}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+	\includegraphics[width=\linewidth]{m5/memoryHierarchy}
+\end{minipage}
+\end{definition}
+
+\begin{definition}{\textbf{Principles of Locality}}
+	\begin{myitemize}
+		\item \textbf{Spatial Locality}: If you've accessed a memory location, there's a very high chance that the next location you access is right next to it. E.g. executing instructions sequentially, accessing elements of an array.
+		\item \textbf{Temporal Locality}: If you've accessed a memory location, there's a very high chance that you will access it again. E.g. Loops.
+		\item \textbf{Note}: Because of locality, memory hierarchy allows you to have:
+		\begin{myitemize}
+			\item \textbf{Very fast memory}, since most accesses come from the fast top layer.
+			\item \textbf{Very large memory}, since we can continue to keep what we don't (yet) need in the lowest layer.
+		\end{myitemize}
+	\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Virtual Memory}}
+	It is implemented on your hard disk! The layer above (your ``main memory'') maintains a copy of a small portion of the VM.
+	
+	We can do this by having instructions and data that the CPU is currently interested in, in main memory. Everything else stays on the VM. In this way we can squeeze MUCH MORE instructions and data than otherwise possible!
+	
+	\textbf{Paging}
+	
+	\begin{minipage}{0.5\linewidth}
+		\begin{myitemize}
+			\item VM is divided into fixed equal sized blocks called ``pages''. 
+			\item Physical memory is divided into ``frames'' that are the same size as a VM page. A ``Virtual page'' in the VM can be loaded to any ``physical frame''  in main memory.
+			\item The CPU always generates ``virtual addresses''. I.e. any CPU address always points to a page in virtual memory.
+		\end{myitemize}
+\end{minipage}
+\begin{minipage}{0.25\linewidth}
+	\includegraphics[width=1\linewidth]{m5/paging}
+\end{minipage}
+\begin{minipage}{0.25\linewidth}
+	\includegraphics[width=1\linewidth]{m5/addressMapping}	
+\end{minipage}
+
+\textbf{Virtual to Physical Address Mapping}
+
+\begin{minipage}{0.75\linewidth}
+	\begin{myitemize}
+		\item Virtual Page Number = Page Identifier; Frame number = Physical Page Number; Offset = Byte Index.
+		\item Specialised hardware on the CPU, together with virtual memory services in the OS, work together to translate “virtual addresses” into “physical addresses” that correspond to locations in main memory.
+		\item ``page table'': V=1 means the information requested is in main memory.
+	\end{myitemize}
+	
+\end{minipage}
+\begin{minipage}{0.25\linewidth}
+	\includegraphics[width=.9\linewidth]{m5/pagetable}
+\end{minipage}
+
+\begin{minipage}{0.5\linewidth}
+	\begin{myenumerate}
+		\item The virtual address forms an index into the page table. If the ``virtual page'' is in memory, a ``memory translation'' process takes place that locates which frame this virtual page has been loaded into.
+		\item This information is used to generate the ``physical address'' to access main memory.
+	\end{myenumerate}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+	\includegraphics[width=.8\linewidth]{m5/translationProcedure}
+\end{minipage}
+
+\begin{myitemize}
+	\item Given an N bit virtual addressing space, P bit physical addressing space with B byte page/frame size:
+	\[\text{\# of bits in offset} = \log_2(B) \]
+	\[\text{\# of bits in page identifier (or VPN)} = N - \log_2(B) \]
+	\[\text{\# of bits in frame number} = P - \log_2(B) \]
+	\item So if we have 32KB pages, a 4GB virtual addressing space and  2 GB of physical memory:
+	\[\text{offset} =log2(32KB) = 15 \text{ bits}\]
+	\[\text{Page identifier}: \log_2(4GB)-15=32-15=17 \text{ bits} \]
+	\[\text{Frame number}: \log_2(2GB)-15=31-15=16 \text{ bits} \]
+	There will be $2^{17}$ pages in this system, with $2^{16}$ frames.
+	\item \textbf{Note}: 
+	\begin{myenumerate}
+		\item \textbf{No external fragmentation}: Pages that should be contiguous can be mapped to non-contiguous frames.
+		\item \textbf{Internal fragmentation}: Basic allocation unit is now 1 page. Can be quite large!
+		\item \textbf{Mapping is transparent} to programs. Programs only ``see'' virtual addresses.
+		\item Can grow process segments by adding more pages. Growth is now limited to multiples of one page.
+	\end{myenumerate}
+	\item \textbf{Page Faults}: The V flag will be ``0''. The hardware sees this and generates a ``page fault'' interrupt. This is vectored to a “page fault” ISR within the OS.
+	\begin{myenumerate}
+		\item Locates where the missing page is on the disk: When V=0, the page table contains the location on disk where the page is (in cylinder/side/block format).
+		\item Finds a free frame to load the VM page into.
+		\item Updates the page table. Set V=1, and changes the entry to show which frame the virtual page has been loaded into.
+		\item The VM then goes through the rest of the address translation process to allow the CPU to access the faulting data/instruction.
+	\end{myenumerate}
+	\item \textbf{Page loading policy}:
+	\begin{myitemize}
+		\item \textbf{Demand Paging}: Page is loaded when an access is made to a location inside it.
+		\item \textbf{Pre-paging}: Other pages (e.g. surrounding pages) can be loaded together with the fault page. Pages can be pre-loaded when a process starts.
+		\item Can be a mix of strategies.
+	\end{myitemize}
+	\item \textbf{Replacement policy}:
+	\begin{myitemize}
+		\item \textbf{FIFO}: 
+		\begin{myitemize}
+ 			\item \textbf{Principle}: First page in = first page out.
+		\item Use a FIFO queue of pages read in. New pages are added to the tail, pages at the head are swapped out when no more frames.
+		\item \textbf{Belady's anomaly}: In a FIFO replacement policy, having more frames can increase paging instead of decreasing it.
+		\item \textbf{Resolution}: consider frequency of use (i.e. temporal locality) instead of age. Optimal Page Replacement (OPT), Least Recently Used (LRU) and Clock Replacement (CR). None of these suffer from Belady's Anomaly.
+		\end{myitemize}
+		\item \textbf{LRU - Least Recently Used}
+		\begin{myitemize}
+			\item Each page table entry (PTE) has an p-bit counter $c_i$. At each access to page i, the $c_i$ is set to $2^p-1$. Counter for all other pages is decremented by 1.
+			\item When it is time to replace a page: Perform a search through page table to find smallest $c_i$. Swap that page back to disk.
+			\item If $>1$ page has smallest $c_i$, choose the first one we encountered.
+			\item \textbf{Note}: only approximation version of LRU as the counting range (p bit) cannot be too big.
+		\end{myitemize}
+		\end{myitemize}
+		\item \textbf{Rewriting pages back to disk}: Pages are large. Writing swapped out pages back to disk is expensive. Have a ``D'' (Dirty) bit in each PTE. \textbf{Note}: requires hardware support to update D.
+\end{myitemize}
+\end{definition}
+
+\begin{definition}{\textbf{Thrashing}}: a performance disaster
+	When the amount of data/instructions in VM is much, much greater than available physical memory.
+	\begin{myenumerate}
+		\item Accessing instructions/data might frequently be in pages that aren't yet in physical memory.
+		\item Shortage of physical memory causes frames to be frequently swapped out to disk.
+		\item The swapped out frames are accessed again, causing other frames to be swapped out so that these can be swapped back in.
+		\item Huge array, 4 million bytes. Random accesses will likely cause pages to be swapped out and back in again.
+	\end{myenumerate}
+\end{definition}
+
+\begin{definition}{\textbf{Translation Lookaside}}
+
+\begin{minipage}{0.5\linewidth}
+	The page table is in main memory. \textbf{Two access}: One access to consult the page table. One access to actually read/write the physical memory. (Main memory is slower than the cache, therefore store parts of the page table in cache)
+	\begin{myitemize}
+		\item This special cache is called the ``Translation Lookaside Buffer'' or TLB. This is often located on the CPU die itself.
+
+	\end{myitemize}
+\end{minipage}\hspace{5mm}
+\begin{minipage}{0.4\linewidth}
+	\includegraphics[width=\linewidth]{m5/translationLookasideBuffer}
+\end{minipage}
+	
+
+\end{definition}
+
+\begin{example}{\textbf{Virtual memory calculation example}}
+	\begin{myitemize}
+		\item \textbf{Question}: consider a virtual memory system with 64 bytes per page, 10 bit virtual addresses and 9 bit physical addresses.
+		\item Maximum size in bytes of the virtual memory is $2^{10}=1024$ bytes. Maximum size of the physical memory is $2^{9}=512$ bytes.
+		\item Byte index is 6 bits ($2^6=64$), leaving 4 bits for VPN or 16 virtual pages, and 3 bits for PPN or 8 physical pages.
+		\item \textbf{translation procedure}: convert virtual address into binary $\rightarrow$ get the VPN $\rightarrow$ look up at the page table to get the PPN $\rightarrow$ add the byte index (last few bits just now) $\rightarrow$ convert the PPN and byte index from binary to decimal, this is the physical address.
+	\end{myitemize}
+\end{example}
+
+\newpage
+\section{Acronym \& Abbreviation Checklist}
+A:
+
+B: \texttt{BSD}: Berkeley Software Distribution; 
+
+C: \texttt{CPU}: Central Processing Unit; \texttt{CIA}: Critical Instance Analysis; \texttt{COW}: Copy on Write; \texttt{CR}: Clock Replacement;
+
+D: \texttt{DAG}: Directed Acyclic Graph; \texttt{DMA}: Direct Memory Access; \texttt{DRAM}: Dynamic random-access memory;
+
+E: \texttt{EDF}: Earliest Deadline First Schedling; \texttt{EOF}: End Of File; 
+
+F: \texttt{FAT}: File Allocation Table; \texttt{FCFS}: First Come First Served; \texttt{FIFO}: First In First Out; \texttt{FD}: File Descriptor; 
+
+G:
+
+H:
+
+I: \texttt{ISR}: Interrupt Service Routine; \texttt{IO}: Input Output; \texttt{IPC}: Inter-process communication; \texttt{IRQ}: Interrupt Request;
+
+J:
+
+K:
+
+L: \texttt{LRU}: Least Recently Used;
+
+M: \texttt{MBR}: Master Boot Record;  \texttt{MSW}: Machine Status Word;
+
+N:
+
+O: \texttt{OS}: operating system; \texttt{OFT}: Open File Table; \texttt{OPT}: Optimal Page Replacement;
+
+P: \texttt{PC}: Program Counter; \texttt{PID}: Process ID; \texttt{PPID}: Parent Process ID; \texttt{PCB}: Process Control Block; \texttt{PTE}: Page Table Entry; \texttt{PPN}: Physical Page Number;
+
+Q:
+
+R: \texttt{RR}: Round Robin; \texttt{RMS}: Rate Monotonic Scheduling; \texttt{RAM}: Random Access Memory; 
+
+S: \texttt{SREG}: Status Register;
+  \texttt{SJF}: Shortest Job First; \texttt{SRT}: Shortest Remaining Time; \texttt{SSTF}: Shortest Seek Time First; \texttt{SRAM}: Static random-access memory;
+
+T: \texttt{TSL}: Test and Set Lock; \texttt{TOC}: Table of Contents; \texttt{TLB}: Translation Lookaside Buffer;
+
+U: \texttt{USB}: Universal Serial Bus;
+
+V: \texttt{VM}$^{1}$: Virtual Machine; \texttt{VS}: Voluntary Scheduling; \texttt{VM}$^{2}$: Virtual Memory; \texttt{VPN}: Virtual Page Number; 
+
+W:
+
+X: \texttt{XCHG}: Exchange Register/Memory with Register;
+
+Y:
+
+Z:
+
+
+
+% $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ %
+
+\end{document}
